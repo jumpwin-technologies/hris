@@ -1,8 +1,28 @@
 ---
 import BaseHead from '../components/BaseHead.astro';
-import Header from '../components/Header.astro';
-import Footer from '../components/Footer.astro';
-import { SITE_TITLE, SITE_DESCRIPTION } from '../consts';
+import workbookData from '../data/workbook.json';
+import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
+
+const employeeSheet = workbookData.sheets[0];
+const costCenterSheet = workbookData.sheets[1];
+const employeeRows = employeeSheet.values.slice(3, 42).filter((row) => row[1]);
+const employees = employeeRows.map((row) => ({
+	no: row[0] ?? '',
+	id: row[1] ?? '',
+	legalName: row[2] ?? '',
+	name: row[3] ?? '',
+	costCenter: String(row[4] ?? ''),
+	legalEntity: row[5] ?? '',
+	location: row[6] ?? '',
+	designation: row[7] ?? '',
+	department: row[8] ?? '',
+	manager: row[9] ?? '',
+	joinDate: row[10] ?? '',
+	email: row[11] ?? '',
+	note: row[12] ?? '',
+}));
+const costCenters = costCenterSheet.values.flat().filter((value) => typeof value === 'number').map(String);
+const dashboardSeed = { employees, costCenters };
 ---
 
 <!doctype html>
@@ -11,40 +31,387 @@ import { SITE_TITLE, SITE_DESCRIPTION } from '../consts';
 		<BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
 	</head>
 	<body>
-		<Header />
+		<header class="topbar">
+			<a class="brand" href="/" aria-label="Jumpwin People home">
+				<span class="brand-mark" aria-hidden="true">JW</span>
+				<span><strong>Jumpwin</strong><small>People</small></span>
+			</a>
+			<div class="local-status" id="save-state" role="status" aria-live="polite">
+				<span class="status-dot"></span>
+				<span>Local draft</span>
+			</div>
+		</header>
+
 		<main>
-			<h1>🧑‍🚀 Hello, Astronaut!</h1>
-			<p>
-				Welcome to the official <a href="https://astro.build/">Astro</a> blog starter template. This
-				template serves as a lightweight, minimally-styled starting point for anyone looking to build
-				a personal website, blog, or portfolio with Astro.
-			</p>
-			<p>
-				This template comes with a few integrations already configured in your
-				<code>astro.config.mjs</code> file. You can customize your setup with
-				<a href="https://astro.build/integrations">Astro Integrations</a> to add tools like Tailwind,
-				React, or Vue to your project.
-			</p>
-			<p>Here are a few ideas on how to get started with the template:</p>
-			<ul>
-				<li>Edit this page in <code>src/pages/index.astro</code></li>
-				<li>Edit the site header items in <code>src/components/Header.astro</code></li>
-				<li>Add your name to the footer in <code>src/components/Footer.astro</code></li>
-				<li>Check out the included blog posts in <code>src/content/blog/</code></li>
-				<li>Customize the blog post page layout in <code>src/layouts/BlogPost.astro</code></li>
-			</ul>
-			<p>
-				Have fun! If you get stuck, remember to <a href="https://docs.astro.build/"
-					>read the docs
-				</a> or <a href="https://astro.build/chat">join us on Discord</a> to ask questions.
-			</p>
-			<p>
-				Looking for a blog template with a bit more personality? Check out <a
-					href="https://github.com/Charca/astro-blog-template"
-					>astro-blog-template
-				</a> by <a href="https://twitter.com/Charca">Maxi Ferreira</a>.
-			</p>
+			<section class="page-heading">
+				<div>
+					<p class="eyebrow">Employee directory</p>
+					<h1>People dashboard</h1>
+					<p>Keep employee information current in one simple workspace.</p>
+				</div>
+				<button class="button primary" id="add-employee" type="button">
+					<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
+					Add employee
+				</button>
+			</section>
+
+			<section class="metrics" aria-label="Employee summary">
+				<article class="metric-card">
+					<span class="metric-icon green"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" /></svg></span>
+					<div><span>Total people</span><strong id="metric-total">—</strong></div>
+				</article>
+				<article class="metric-card">
+					<span class="metric-icon blue"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M3 21h18M5 21V7l7-4v18M19 21V11l-7-4M8 9h1M8 13h1M8 17h1M15 13h1M15 17h1" /></svg></span>
+					<div><span>Departments</span><strong id="metric-departments">—</strong></div>
+				</article>
+				<article class="metric-card">
+					<span class="metric-icon amber"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z" /><circle cx="12" cy="10" r="2.5" /></svg></span>
+					<div><span>Locations</span><strong id="metric-locations">—</strong></div>
+				</article>
+				<article class="metric-card">
+					<span class="metric-icon violet"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v15H3V6a2 2 0 0 1 2-2Z" /><path d="m9 16 2 2 4-4" /></svg></span>
+					<div><span>Onboarding</span><strong id="metric-onboarding">—</strong></div>
+				</article>
+			</section>
+
+			<section class="directory-card" aria-labelledby="directory-title">
+				<div class="directory-toolbar">
+					<div>
+						<h2 id="directory-title">Employees</h2>
+						<p id="employee-count">Loading…</p>
+					</div>
+					<div class="filters">
+						<label class="search-box" for="employee-search">
+							<svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></svg>
+							<input id="employee-search" type="search" autocomplete="off" placeholder="Search people" />
+						</label>
+						<label class="select-wrap">
+							<span class="sr-only">Department</span>
+							<select id="department-filter"><option value="">All departments</option></select>
+							<svg aria-hidden="true" viewBox="0 0 24 24"><path d="m8 10 4 4 4-4" /></svg>
+						</label>
+						<label class="select-wrap">
+							<span class="sr-only">Status</span>
+							<select id="status-filter">
+								<option value="">All statuses</option>
+								<option>Active</option>
+								<option>Onboarding</option>
+								<option>Departing</option>
+							</select>
+							<svg aria-hidden="true" viewBox="0 0 24 24"><path d="m8 10 4 4 4-4" /></svg>
+						</label>
+					</div>
+				</div>
+
+				<div class="table-wrap">
+					<table>
+						<thead>
+							<tr>
+								<th scope="col">Employee</th>
+								<th scope="col">Role</th>
+								<th scope="col">Department</th>
+								<th scope="col">Location</th>
+								<th scope="col">Join date</th>
+								<th scope="col">Status</th>
+								<th scope="col"><span class="sr-only">Actions</span></th>
+							</tr>
+						</thead>
+						<tbody id="employee-rows"></tbody>
+					</table>
+					<div class="empty-state" id="empty-state" hidden>
+						<svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></svg>
+						<h3>No employees found</h3>
+						<p>Try a different search or filter.</p>
+					</div>
+				</div>
+
+				<footer class="directory-footer">
+					<p><span class="status-dot"></span> Changes save automatically in this browser</p>
+					<button class="text-button" id="restore-original" type="button">Restore original data</button>
+				</footer>
+			</section>
 		</main>
-		<Footer />
+
+		<dialog id="employee-dialog">
+			<form id="employee-form" method="dialog">
+				<header class="dialog-header">
+					<div>
+						<p class="eyebrow">Employee record</p>
+						<h2 id="dialog-title">Edit employee</h2>
+					</div>
+					<button class="icon-button" id="close-dialog" type="button" aria-label="Close">
+						<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18" /></svg>
+					</button>
+				</header>
+
+				<div class="form-grid">
+					<label><span>Employee ID</span><input name="id" required /></label>
+					<label><span>English name</span><input name="name" required /></label>
+					<label class="wide"><span>Legal name</span><input name="legalName" /></label>
+					<label class="wide"><span>Email</span><input name="email" type="email" /></label>
+					<label><span>Designation</span><input name="designation" /></label>
+					<label><span>Department</span><input name="department" list="department-options" /></label>
+					<label><span>Cost center</span><input name="costCenter" list="cost-center-options" /></label>
+					<label><span>Manager</span><input name="manager" list="manager-options" /></label>
+					<label><span>Legal entity</span><input name="legalEntity" /></label>
+					<label><span>Location</span><input name="location" list="location-options" /></label>
+					<label><span>Join date</span><input name="joinDate" type="date" /></label>
+					<label><span>Status</span><select name="status"><option>Active</option><option>Onboarding</option><option>Departing</option></select></label>
+					<label class="wide"><span>Note</span><textarea name="note" rows="3"></textarea></label>
+				</div>
+
+				<datalist id="department-options"></datalist>
+				<datalist id="cost-center-options"></datalist>
+				<datalist id="manager-options"></datalist>
+				<datalist id="location-options"></datalist>
+
+				<footer class="dialog-actions">
+					<button class="button secondary" id="cancel-dialog" type="button">Cancel</button>
+					<button class="button primary" type="submit">Save employee</button>
+				</footer>
+			</form>
+		</dialog>
+
+		<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+		<script define:vars={{ dashboardSeed }}>
+			const STORAGE_KEY = 'jumpwin-employee-dashboard-v1';
+			const LEGACY_KEY = 'jumpwin-employee-workbook-v1';
+			const originalEmployees = dashboardSeed.employees.map(normalizeEmployee);
+			let employees = loadEmployees();
+			let editingId = null;
+
+			const rows = document.querySelector('#employee-rows');
+			const search = document.querySelector('#employee-search');
+			const departmentFilter = document.querySelector('#department-filter');
+			const statusFilter = document.querySelector('#status-filter');
+			const employeeCount = document.querySelector('#employee-count');
+			const emptyState = document.querySelector('#empty-state');
+			const dialog = document.querySelector('#employee-dialog');
+			const form = document.querySelector('#employee-form');
+			const toast = document.querySelector('#toast');
+			const saveState = document.querySelector('#save-state');
+
+			function inferStatus(employee) {
+				if (/termination|离职/i.test(employee.note || '')) return 'Departing';
+				if (employee.joinDate) {
+					const today = new Date();
+					today.setHours(0, 0, 0, 0);
+					if (new Date(`${employee.joinDate}T00:00:00`) >= today) return 'Onboarding';
+				}
+				return 'Active';
+			}
+
+			function normalizeEmployee(employee, index = 0) {
+				return {
+					no: employee.no || index + 1,
+					id: String(employee.id || ''),
+					legalName: String(employee.legalName || ''),
+					name: String(employee.name || ''),
+					costCenter: String(employee.costCenter || ''),
+					legalEntity: String(employee.legalEntity || ''),
+					location: String(employee.location || ''),
+					designation: String(employee.designation || ''),
+					department: String(employee.department || ''),
+					manager: String(employee.manager || ''),
+					joinDate: String(employee.joinDate || ''),
+					email: String(employee.email || ''),
+					note: String(employee.note || ''),
+					status: employee.status || inferStatus(employee),
+				};
+			}
+
+			function migrateLegacyWorkbook() {
+				try {
+					const legacy = JSON.parse(localStorage.getItem(LEGACY_KEY));
+					const legacyRows = legacy?.sheets?.[0]?.values?.slice(3, 42)?.filter((row) => row[1]);
+					if (!legacyRows?.length) return null;
+					return legacyRows.map((row, index) => normalizeEmployee({
+						no: row[0], id: row[1], legalName: row[2], name: row[3], costCenter: row[4],
+						legalEntity: row[5], location: row[6], designation: row[7], department: row[8],
+						manager: row[9], joinDate: row[10], email: row[11], note: row[12],
+					}, index));
+				} catch { return null; }
+			}
+
+			function loadEmployees() {
+				try {
+					const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+					if (Array.isArray(saved)) return saved.map(normalizeEmployee);
+				} catch {}
+				return migrateLegacyWorkbook() || structuredClone(originalEmployees);
+			}
+
+			function saveEmployees() {
+				saveState.classList.add('saving');
+				saveState.querySelector('span:last-child').textContent = 'Saving…';
+				try {
+					localStorage.setItem(STORAGE_KEY, JSON.stringify(employees));
+					setTimeout(() => {
+						saveState.classList.remove('saving');
+						saveState.querySelector('span:last-child').textContent = 'Local draft';
+					}, 250);
+				} catch {
+					saveState.querySelector('span:last-child').textContent = 'Save failed';
+				}
+			}
+
+			function unique(field) {
+				return [...new Set(employees.map((employee) => employee[field]).filter(Boolean))].sort();
+			}
+
+			function formatDate(value) {
+				if (!value) return '—';
+				const date = new Date(`${value}T00:00:00`);
+				if (Number.isNaN(date.getTime())) return value;
+				return new Intl.DateTimeFormat('en', { year: 'numeric', month: 'short', day: 'numeric' }).format(date);
+			}
+
+			function initials(name) {
+				return String(name || '?').split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join('').toUpperCase();
+			}
+
+			function createText(tag, className, text) {
+				const element = document.createElement(tag);
+				if (className) element.className = className;
+				element.textContent = text;
+				return element;
+			}
+
+			function renderMetrics() {
+				document.querySelector('#metric-total').textContent = employees.length;
+				document.querySelector('#metric-departments').textContent = unique('department').length;
+				document.querySelector('#metric-locations').textContent = unique('location').length;
+				document.querySelector('#metric-onboarding').textContent = employees.filter((employee) => employee.status === 'Onboarding').length;
+			}
+
+			function renderFilterOptions() {
+				const selected = departmentFilter.value;
+				departmentFilter.replaceChildren(new Option('All departments', ''));
+				unique('department').forEach((department) => departmentFilter.add(new Option(department, department)));
+				departmentFilter.value = selected;
+
+				const lists = {
+					'department-options': unique('department'),
+					'cost-center-options': [...new Set([...dashboardSeed.costCenters, ...unique('costCenter')])].sort(),
+					'manager-options': unique('manager'),
+					'location-options': unique('location'),
+				};
+				Object.entries(lists).forEach(([id, values]) => {
+					const list = document.getElementById(id);
+					list.replaceChildren(...values.map((value) => new Option(value)));
+				});
+			}
+
+			function filteredEmployees() {
+				const term = search.value.trim().toLocaleLowerCase();
+				return employees.filter((employee) => {
+					const searchable = [employee.name, employee.legalName, employee.id, employee.email, employee.designation, employee.department].join(' ').toLocaleLowerCase();
+					return (!term || searchable.includes(term)) && (!departmentFilter.value || employee.department === departmentFilter.value) && (!statusFilter.value || employee.status === statusFilter.value);
+				});
+			}
+
+			function buildEmployeeRow(employee, index) {
+				const tr = document.createElement('tr');
+				tr.tabIndex = 0;
+				tr.dataset.employeeId = employee.id;
+				tr.setAttribute('aria-label', `Edit ${employee.name || employee.id}`);
+
+				const personCell = document.createElement('td');
+				const person = document.createElement('div');
+				person.className = 'person';
+				const avatar = createText('span', `avatar tone-${index % 5}`, initials(employee.name));
+				const personCopy = document.createElement('span');
+				personCopy.append(createText('strong', '', employee.name || 'Unnamed employee'), createText('small', '', `${employee.id}${employee.email ? ` · ${employee.email}` : ''}`));
+				person.append(avatar, personCopy);
+				personCell.append(person);
+
+				const roleCell = document.createElement('td');
+				roleCell.append(createText('strong', 'cell-primary', employee.designation || '—'), createText('small', 'cell-secondary', employee.manager ? `Reports to ${employee.manager}` : 'No manager'));
+				const departmentCell = createText('td', '', employee.department || '—');
+				const locationCell = createText('td', '', employee.location || '—');
+				const dateCell = createText('td', '', formatDate(employee.joinDate));
+				const statusCell = document.createElement('td');
+				statusCell.append(createText('span', `status-badge ${employee.status.toLowerCase()}`, employee.status));
+				const actionCell = document.createElement('td');
+				const editButton = document.createElement('button');
+				editButton.type = 'button';
+				editButton.className = 'edit-button';
+				editButton.textContent = 'Edit';
+				editButton.addEventListener('click', (event) => { event.stopPropagation(); openEmployee(employee.id); });
+				actionCell.append(editButton);
+
+				tr.append(personCell, roleCell, departmentCell, locationCell, dateCell, statusCell, actionCell);
+				tr.addEventListener('click', () => openEmployee(employee.id));
+				tr.addEventListener('keydown', (event) => { if (event.key === 'Enter') openEmployee(employee.id); });
+				return tr;
+			}
+
+			function renderTable() {
+				const visible = filteredEmployees();
+				rows.replaceChildren(...visible.map(buildEmployeeRow));
+				employeeCount.textContent = `${visible.length} of ${employees.length} people`;
+				emptyState.hidden = visible.length > 0;
+			}
+
+			function openEmployee(id = null) {
+				editingId = id;
+				form.reset();
+				const employee = id ? employees.find((item) => item.id === id) : normalizeEmployee({ status: 'Active' }, employees.length);
+				document.querySelector('#dialog-title').textContent = id ? 'Edit employee' : 'Add employee';
+				for (const [field, value] of Object.entries(employee)) {
+					if (form.elements[field]) form.elements[field].value = value ?? '';
+				}
+				dialog.showModal();
+				setTimeout(() => form.elements.id.focus(), 0);
+			}
+
+			function closeDialog() {
+				dialog.close();
+				editingId = null;
+			}
+
+			function showToast(message) {
+				toast.textContent = message;
+				toast.classList.add('show');
+				setTimeout(() => toast.classList.remove('show'), 2200);
+			}
+
+			form.addEventListener('submit', (event) => {
+				event.preventDefault();
+				const values = Object.fromEntries(new FormData(form).entries());
+				const existingIndex = editingId ? employees.findIndex((employee) => employee.id === editingId) : -1;
+				const employee = normalizeEmployee({ ...values, no: existingIndex >= 0 ? employees[existingIndex].no : employees.length + 1 }, existingIndex >= 0 ? existingIndex : employees.length);
+				if (existingIndex >= 0) employees[existingIndex] = employee;
+				else employees.push(employee);
+				saveEmployees();
+				renderAll();
+				closeDialog();
+				showToast(existingIndex >= 0 ? 'Employee updated' : 'Employee added');
+			});
+
+			search.addEventListener('input', renderTable);
+			departmentFilter.addEventListener('change', renderTable);
+			statusFilter.addEventListener('change', renderTable);
+			document.querySelector('#add-employee').addEventListener('click', () => openEmployee());
+			document.querySelector('#close-dialog').addEventListener('click', closeDialog);
+			document.querySelector('#cancel-dialog').addEventListener('click', closeDialog);
+			dialog.addEventListener('click', (event) => { if (event.target === dialog) closeDialog(); });
+			document.querySelector('#restore-original').addEventListener('click', () => {
+				if (!confirm('Restore all employee records to the original spreadsheet data?')) return;
+				employees = structuredClone(originalEmployees);
+				localStorage.removeItem(STORAGE_KEY);
+				renderAll();
+				showToast('Original data restored');
+			});
+
+			function renderAll() {
+				renderMetrics();
+				renderFilterOptions();
+				renderTable();
+			}
+
+			renderAll();
+		</script>
 	</body>
 </html>
