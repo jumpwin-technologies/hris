@@ -32,10 +32,14 @@ const dashboardSeed = { employees, costCenters };
 	</head>
 	<body>
 		<header class="topbar">
-			<a class="brand" href="/" aria-label="Jumpwin People home">
-				<span class="brand-mark" aria-hidden="true">JW</span>
-				<span><strong>Jumpwin</strong><small>People</small></span>
-			</a>
+			<button class="identity-button" id="identity-button" type="button" aria-haspopup="dialog">
+				<span class="identity-avatar" id="identity-avatar" aria-hidden="true">?</span>
+				<span class="identity-copy">
+					<strong id="identity-name">Signed in</strong>
+					<small id="identity-email">Cloudflare Access</small>
+				</span>
+				<svg aria-hidden="true" viewBox="0 0 24 24"><path d="m8 10 4 4 4-4" /></svg>
+			</button>
 			<div class="local-status" id="save-state" role="status" aria-live="polite">
 				<span class="status-dot"></span>
 				<span>Local draft</span>
@@ -172,7 +176,35 @@ const dashboardSeed = { employees, costCenters };
 			</form>
 		</dialog>
 
+		<dialog class="identity-dialog" id="identity-dialog">
+			<header class="dialog-header">
+				<div>
+					<p class="eyebrow">Cloudflare Access</p>
+					<h2>Authenticated identity</h2>
+				</div>
+				<button class="icon-button" id="close-identity-dialog" type="button" aria-label="Close">
+					<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18" /></svg>
+				</button>
+			</header>
+			<div class="identity-details">
+				<div class="identity-hero">
+					<span class="identity-avatar large" id="identity-dialog-avatar" aria-hidden="true">?</span>
+					<div><strong id="identity-dialog-name">Signed-in user</strong><span id="identity-dialog-email">—</span></div>
+				</div>
+				<dl>
+					<div><dt>Access identity ID</dt><dd id="identity-id">—</dd></div>
+					<div><dt>Application audience</dt><dd id="identity-audience">—</dd></div>
+					<div><dt>Entra groups</dt><dd id="identity-groups">None returned</dd></div>
+				</dl>
+				<details>
+					<summary>View identity payload</summary>
+					<pre id="identity-json"></pre>
+				</details>
+			</div>
+		</dialog>
+
 		<div class="toast" id="toast" role="status" aria-live="polite"></div>
+		<script is:inline id="access-identity-data" type="application/json">__ACCESS_IDENTITY_JSON__</script>
 
 		<script define:vars={{ dashboardSeed }}>
 			const STORAGE_KEY = 'jumpwin-employee-dashboard-v1';
@@ -191,6 +223,45 @@ const dashboardSeed = { employees, costCenters };
 			const form = document.querySelector('#employee-form');
 			const toast = document.querySelector('#toast');
 			const saveState = document.querySelector('#save-state');
+			const identityDialog = document.querySelector('#identity-dialog');
+
+			function getAccessIdentity() {
+				const element = document.querySelector('#access-identity-data');
+				try {
+					return JSON.parse(element?.textContent || '');
+				} catch {
+					return null;
+				}
+			}
+
+			function displayName(identity) {
+				return identity?.name || identity?.email?.split('@')[0] || 'Signed-in user';
+			}
+
+			function groupNames(groups) {
+				if (!Array.isArray(groups)) return [];
+				return groups.map((group) => typeof group === 'string' ? group : group?.name || group?.id).filter(Boolean);
+			}
+
+			function renderAccessIdentity() {
+				const access = getAccessIdentity();
+				const identity = access?.identity;
+				if (!identity) return;
+
+				const name = displayName(identity);
+				const avatar = initials(name);
+				const groups = groupNames(identity.groups);
+				document.querySelector('#identity-name').textContent = name;
+				document.querySelector('#identity-email').textContent = identity.email || 'Cloudflare Access';
+				document.querySelector('#identity-avatar').textContent = avatar;
+				document.querySelector('#identity-dialog-avatar').textContent = avatar;
+				document.querySelector('#identity-dialog-name').textContent = name;
+				document.querySelector('#identity-dialog-email').textContent = identity.email || '—';
+				document.querySelector('#identity-id').textContent = identity.user_uuid || identity.id || identity.sub || '—';
+				document.querySelector('#identity-audience').textContent = access.aud || '—';
+				document.querySelector('#identity-groups').textContent = groups.length ? groups.join(', ') : 'None returned';
+				document.querySelector('#identity-json').textContent = JSON.stringify(access, null, 2);
+			}
 
 			function inferStatus(employee) {
 				if (/termination|离职/i.test(employee.note || '')) return 'Departing';
@@ -397,6 +468,9 @@ const dashboardSeed = { employees, costCenters };
 			document.querySelector('#close-dialog').addEventListener('click', closeDialog);
 			document.querySelector('#cancel-dialog').addEventListener('click', closeDialog);
 			dialog.addEventListener('click', (event) => { if (event.target === dialog) closeDialog(); });
+			document.querySelector('#identity-button').addEventListener('click', () => identityDialog.showModal());
+			document.querySelector('#close-identity-dialog').addEventListener('click', () => identityDialog.close());
+			identityDialog.addEventListener('click', (event) => { if (event.target === identityDialog) identityDialog.close(); });
 			document.querySelector('#restore-original').addEventListener('click', () => {
 				if (!confirm('Restore all employee records to the original spreadsheet data?')) return;
 				employees = structuredClone(originalEmployees);
@@ -411,6 +485,7 @@ const dashboardSeed = { employees, costCenters };
 				renderTable();
 			}
 
+			renderAccessIdentity();
 			renderAll();
 		</script>
 	</body>

@@ -1,11 +1,36 @@
 {
+	"$schema": "./node_modules/wrangler/config-schema.json",
 	"name": "hris",
-	"compatibility_date": "2025-10-08",
+	"compatibility_date": "2026-09-03",
 	"compatibility_flags": ["nodejs_compat"],
-	"main": "./dist/_worker.js/index.js",
-	"assets": {
-		"directory": "./dist",
-		"binding": "ASSETS"
+	"main": "./src/worker.ts",
+	"rules": [
+		{
+			"type": "Text",
+			"globs": ["**/*.html", "**/*.svg"],
+			"fallthrough": true
+		},
+		{
+			"type": "Data",
+			"globs": ["**/*.woff"],
+			"fallthrough": true
+		}
+	],
+	"access": {
+		"dev": {
+			"aud": "local-hris-access",
+			"identity": {
+				"id": "local-entra-user",
+				"name": "Local Entra User",
+				"email": "local.user@jumpwin.test",
+				"groups": [
+					{
+						"id": "local-it-group",
+						"name": "IT"
+					}
+				]
+			}
+		}
 	},
 	"observability": {
 		"enabled": true
