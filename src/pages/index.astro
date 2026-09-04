@@ -1,6 +1,7 @@
 ---
 import BaseHead from '../components/BaseHead.astro';
 import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
+import managerComboboxHelpersSource from '../scripts/manager-combobox.js?raw';
 ---
 
 <!doctype html>
@@ -137,7 +138,16 @@ import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
 					<label><span>Job title</span><input name="jobTitle" /></label>
 					<label><span>Department</span><input name="department" list="department-options" /></label>
 					<label><span>Cost center</span><input name="costCenter" list="cost-center-options" /></label>
-					<label><span>Manager</span><input name="manager" list="manager-options" /></label>
+					<div class="form-field">
+						<label for="manager-input">Manager</label>
+						<div class="manager-combobox">
+							<input id="manager-input" name="manager" type="search" role="combobox" aria-autocomplete="list" aria-controls="manager-options" aria-expanded="false" autocomplete="off" placeholder="Search employees" />
+							<button class="combobox-toggle" id="manager-toggle" type="button" aria-label="Show manager options" aria-controls="manager-options" aria-expanded="false">
+								<svg aria-hidden="true" viewBox="0 0 24 24"><path d="m8 10 4 4 4-4" /></svg>
+							</button>
+							<div class="combobox-options" id="manager-options" role="listbox" hidden></div>
+						</div>
+					</div>
 					<label><span>Branch</span><input name="branch" list="branch-options" /></label>
 					<label><span>Office</span><input name="office" list="office-options" /></label>
 					<label><span>Join date</span><input name="joinDate" type="date" /></label>
@@ -149,7 +159,6 @@ import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
 
 				<datalist id="department-options"></datalist>
 				<datalist id="cost-center-options"></datalist>
-				<datalist id="manager-options"></datalist>
 				<datalist id="branch-options"></datalist>
 				<datalist id="office-options"></datalist>
 
@@ -189,11 +198,13 @@ import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
 
 		<div class="toast" id="toast" role="status" aria-live="polite"></div>
 		<script is:inline id="access-identity-data" type="application/json">__ACCESS_IDENTITY_JSON__</script>
+		<script is:inline set:html={managerComboboxHelpersSource}></script>
 
 		<script is:inline>
 			let employees = [];
 			let costCenters = [];
 			let editingId = null;
+			let originalManager = null;
 
 			const rows = document.querySelector('#employee-rows');
 			const search = document.querySelector('#employee-search');
@@ -206,6 +217,12 @@ import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
 			const toast = document.querySelector('#toast');
 			const saveState = document.querySelector('#save-state');
 			const identityDialog = document.querySelector('#identity-dialog');
+			const managerInput = document.querySelector('#manager-input');
+			const managerToggle = document.querySelector('#manager-toggle');
+			const managerOptions = document.querySelector('#manager-options');
+			const { isManagerAllowed, managerCandidates, nextManagerIndex, normalizeManager } = globalThis.managerComboboxHelpers;
+			let visibleManagerNames = [];
+			let activeManagerIndex = -1;
 
 			function getAccessIdentity() {
 				const element = document.querySelector('#access-identity-data');
@@ -307,6 +324,66 @@ import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
 				return [...new Set(employees.map((employee) => employee[field]).filter(Boolean))].sort();
 			}
 
+			function closeManagerOptions() {
+				managerOptions.hidden = true;
+				managerInput.setAttribute('aria-expanded', 'false');
+				managerToggle.setAttribute('aria-expanded', 'false');
+				managerToggle.setAttribute('aria-label', 'Show manager options');
+				managerInput.removeAttribute('aria-activedescendant');
+				activeManagerIndex = -1;
+			}
+
+			function selectManager(name) {
+				managerInput.value = name;
+				managerInput.setCustomValidity('');
+				closeManagerOptions();
+				managerInput.focus();
+			}
+
+			function setActiveManager(index) {
+				if (!visibleManagerNames.length) return;
+				activeManagerIndex = index;
+				const options = [...managerOptions.querySelectorAll('[role="option"]')];
+				options.forEach((option, optionIndex) => option.setAttribute('aria-selected', String(optionIndex === activeManagerIndex)));
+				const activeOption = options[activeManagerIndex];
+				managerInput.setAttribute('aria-activedescendant', activeOption.id);
+				activeOption.scrollIntoView({ block: 'nearest' });
+			}
+
+			function renderManagerOptions() {
+				const query = managerInput.value.trim().toLocaleLowerCase();
+				visibleManagerNames = managerCandidates(employees, editingId).filter((name) => !query || name.toLocaleLowerCase().includes(query));
+				activeManagerIndex = -1;
+				managerOptions.replaceChildren();
+
+				if (!visibleManagerNames.length) {
+					managerOptions.append(createText('div', 'combobox-empty', 'No matching employees'));
+				} else {
+					visibleManagerNames.forEach((name, index) => {
+						const option = createText('button', 'combobox-option', name);
+						option.type = 'button';
+						option.id = `manager-option-${index}`;
+						option.tabIndex = -1;
+						option.setAttribute('role', 'option');
+						option.setAttribute('aria-selected', 'false');
+						option.addEventListener('pointerdown', (event) => event.preventDefault());
+						option.addEventListener('click', () => selectManager(name));
+						managerOptions.append(option);
+					});
+				}
+
+				managerOptions.hidden = false;
+				managerInput.setAttribute('aria-expanded', 'true');
+				managerToggle.setAttribute('aria-expanded', 'true');
+				managerToggle.setAttribute('aria-label', 'Hide manager options');
+			}
+
+			function validateManager() {
+				const valid = isManagerAllowed(managerInput.value, managerCandidates(employees, editingId), originalManager);
+				managerInput.setCustomValidity(valid ? '' : 'Select a manager from the employee list.');
+				return valid;
+			}
+
 			function formatDate(value) {
 				if (!value) return '—';
 				const date = new Date(`${value}T00:00:00`);
@@ -341,7 +418,6 @@ import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
 				const lists = {
 					'department-options': unique('department'),
 					'cost-center-options': [...new Set([...costCenters, ...unique('costCenter')])].sort(),
-					'manager-options': unique('manager'),
 					'branch-options': unique('branch'),
 					'office-options': unique('office'),
 				};
@@ -405,7 +481,10 @@ import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
 			function openEmployee(id = null) {
 				editingId = id;
 				form.reset();
+				managerInput.setCustomValidity('');
+				closeManagerOptions();
 				const employee = id ? employees.find((item) => item.id === id) : normalizeEmployee({ employmentStatus: 'Active' });
+				originalManager = id ? employee.manager : null;
 				document.querySelector('#dialog-title').textContent = id ? 'Edit employee' : 'Add employee';
 				for (const [field, value] of Object.entries(employee)) {
 					if (form.elements[field]) form.elements[field].value = value ?? '';
@@ -415,8 +494,10 @@ import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
 			}
 
 			function closeDialog() {
+				closeManagerOptions();
 				dialog.close();
 				editingId = null;
+				originalManager = null;
 			}
 
 			function showToast(message) {
@@ -427,6 +508,12 @@ import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
 
 			form.addEventListener('submit', async (event) => {
 				event.preventDefault();
+				managerInput.value = normalizeManager(managerInput.value);
+				if (!validateManager()) {
+					managerInput.reportValidity();
+					managerInput.focus();
+					return;
+				}
 				const values = Object.fromEntries(new FormData(form).entries());
 				const existingIndex = editingId ? employees.findIndex((employee) => employee.id === editingId) : -1;
 				const endpoint = existingIndex >= 0 ? `/api/employees/${encodeURIComponent(editingId)}` : '/api/employees';
@@ -458,6 +545,38 @@ import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
 			search.addEventListener('input', renderTable);
 			departmentFilter.addEventListener('change', renderTable);
 			statusFilter.addEventListener('change', renderTable);
+			managerInput.addEventListener('focus', renderManagerOptions);
+			managerInput.addEventListener('input', () => {
+				managerInput.setCustomValidity('');
+				renderManagerOptions();
+			});
+			managerInput.addEventListener('blur', () => {
+				validateManager();
+				setTimeout(closeManagerOptions, 0);
+			});
+			managerInput.addEventListener('keydown', (event) => {
+				if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+					event.preventDefault();
+					if (managerOptions.hidden) renderManagerOptions();
+					setActiveManager(nextManagerIndex(activeManagerIndex, visibleManagerNames.length, event.key === 'ArrowDown' ? 1 : -1));
+				} else if (event.key === 'Enter' && !managerOptions.hidden && activeManagerIndex >= 0) {
+					event.preventDefault();
+					selectManager(visibleManagerNames[activeManagerIndex]);
+				} else if (event.key === 'Escape') {
+					event.preventDefault();
+					event.stopPropagation();
+					closeManagerOptions();
+				}
+			});
+			managerToggle.addEventListener('click', () => {
+				const shouldOpen = managerOptions.hidden;
+				managerInput.focus();
+				if (shouldOpen && managerOptions.hidden) renderManagerOptions();
+				else if (!shouldOpen) closeManagerOptions();
+			});
+			document.addEventListener('click', (event) => {
+				if (!event.target.closest('.manager-combobox')) closeManagerOptions();
+			});
 			document.querySelector('#add-employee').addEventListener('click', () => openEmployee());
 			document.querySelector('#close-dialog').addEventListener('click', closeDialog);
 			document.querySelector('#cancel-dialog').addEventListener('click', closeDialog);

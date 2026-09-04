@@ -187,6 +187,22 @@ async function readEmployee(db: D1Database, id: string): Promise<Employee | null
 	return row ? rowToEmployee(row) : null;
 }
 
+export async function validateManagerAssignment(
+	db: D1Database,
+	manager: string,
+	employeeId: string,
+	preservedManager: string | null,
+): Promise<void> {
+	if (!manager || (preservedManager !== null && manager === preservedManager.trim())) return;
+
+	const match = await db.prepare(
+		"SELECT id FROM employees WHERE display_name = ?1 AND id <> ?2 LIMIT 1",
+	).bind(manager, employeeId).first<{ id: string }>();
+	if (!match) {
+		throw new ValidationError("Manager must be blank or match an existing employee display name.");
+	}
+}
+
 function databaseErrorResponse(error: unknown, operation: string): Response {
 	const message = error instanceof Error ? error.message : String(error);
 	console.error(JSON.stringify({ message: "D1 employee operation failed", operation, error: message }));
@@ -212,6 +228,7 @@ export async function handleEmployeesApi(request: Request, db: D1Database): Prom
 
 		if (url.pathname === "/api/employees" && request.method === "POST") {
 			const employee = await parseEmployeeRequest(request);
+			await validateManagerAssignment(db, employee.manager, employee.id, null);
 			await ensureCostCenter(db, employee.costCenter);
 			await db.prepare(`
 				INSERT INTO employees (
@@ -235,8 +252,13 @@ export async function handleEmployeesApi(request: Request, db: D1Database): Prom
 		if (employeeMatch && request.method === "PUT") {
 			const currentId = decodeURIComponent(employeeMatch[1]);
 			const employee = await parseEmployeeRequest(request);
+			const currentEmployee = await readEmployee(db, currentId);
+			if (!currentEmployee) {
+				return apiJson({ error: "not_found", message: "Employee not found." }, 404);
+			}
+			await validateManagerAssignment(db, employee.manager, currentId, currentEmployee.manager);
 			await ensureCostCenter(db, employee.costCenter);
-			const result = await db.prepare(`
+			await db.prepare(`
 				UPDATE employees SET
 					id = ?1, legal_first_name = ?2, legal_last_name = ?3, other_legal_name = ?4,
 					display_name = ?5, email = ?6, branch = ?7, office = ?8, job_title = ?9,
@@ -251,9 +273,6 @@ export async function handleEmployeesApi(request: Request, db: D1Database): Prom
 				employee.pendingJoinDate, employee.leaveDate, employee.pendingLeaveDate, employee.employmentStatus,
 				currentId,
 			).run();
-			if (!result.meta.changes) {
-				return apiJson({ error: "not_found", message: "Employee not found." }, 404);
-			}
 			return apiJson({ employee: await readEmployee(db, employee.id) });
 		}
 
