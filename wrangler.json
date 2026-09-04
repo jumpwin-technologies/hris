@@ -7,7 +7,7 @@
 	"rules": [
 		{
 			"type": "Text",
-			"globs": ["**/*.html", "**/*.svg"],
+			"globs": ["**/*.html", "**/*.svg", "**/*.txt"],
 			"fallthrough": true
 		},
 		{
@@ -32,6 +32,13 @@
 			}
 		}
 	},
+	"d1_databases": [
+		{
+			"binding": "HRIS_DB",
+			"database_name": "jumpwin-hrdb",
+			"migrations_dir": "migrations"
+		}
+	],
 	"observability": {
 		"enabled": true
 	},
