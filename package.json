@@ -34,7 +34,8 @@
 		"check": "astro build && tsc && wrangler deploy --dry-run",
 		"deploy": "wrangler deploy",
 		"dev": "astro dev",
-		"preview": "astro build && wrangler dev"
+		"preview": "astro build && wrangler dev",
+		"test": "npm run build && node --test tests/*.test.mjs"
 	},
 	"type": "module"
 }
