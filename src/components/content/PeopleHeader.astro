@@ -1,0 +1,30 @@
+---
+import Button from "@/components/Button.astro";
+interface Props { /** Set to `false` to omit the component. */ render?: boolean; }
+const { render = true } = Astro.props;
+---
+{render && <header class="people-header_wrap">
+  <div class="people-header_inner">
+    <a class="people-header_brand text-style-h5" href="/" aria-label="Jumpwin home"><span class="people-header_mark" aria-hidden="true">j.</span>jumpwin<span class="people-header_product text-style-small">People</span></a>
+    <nav aria-label="Workspace"><a class="people-header_current" href="#directory" aria-current="page">Directory</a></nav>
+    <Button emphasis="secondary" id="identity-button" data-modal-open="identity-dialog"><span id="identity-name">Your account</span></Button>
+  </div>
+</header>}
+<style is:global>
+  @layer components {
+    .people-header_wrap { border-bottom: var(--border-width) solid var(--border); background: var(--background-2); }
+    .people-header_inner { max-width: var(--max-width-main); margin-inline: auto; padding: var(--space-3) var(--site-margin); display: flex; align-items: center; gap: var(--space-6); }
+    .people-header_brand { display: flex; align-items: center; gap: var(--space-2); text-decoration: none; margin: 0; }
+    .people-header_mark { background: var(--text); color: var(--brand-500); width: 1.5em; height: 1.5em; display: grid; place-items: center; border-radius: var(--radius-small); }
+    .people-header_product { border-left: var(--border-width) solid var(--border); padding-left: var(--space-3); color: var(--text-2); }
+    .people-header_current { text-decoration: none; border-bottom: 0.125rem solid var(--text); padding-block: var(--space-2); }
+    .people-header_inner > .button_wrap { margin-left: auto; }
+    .people-header_wrap {
+      @media (width < 48rem) {
+        .people-header_inner { flex-wrap: wrap; gap: var(--space-3); }
+        .people-header_inner nav { display: none; }
+        .people-header_product { display: none; }
+      }
+    }
+  }
+</style>

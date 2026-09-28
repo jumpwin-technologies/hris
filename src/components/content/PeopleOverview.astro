@@ -1,0 +1,39 @@
+---
+import ContentWrapper from "@/components/wrapper/ContentWrapper.astro";
+import Grid from "@/components/wrapper/Grid.astro";
+import Eyebrow from "@/components/typography/Eyebrow.astro";
+import Heading from "@/components/typography/Heading.astro";
+import Paragraph from "@/components/typography/Paragraph.astro";
+import Button from "@/components/Button.astro";
+import Card from "@/components/item/Card.astro";
+interface Props { /** Set to `false` to omit the component. */ render?: boolean; }
+const { render = true } = Astro.props;
+const metrics = [
+  { label: "Total people", id: "metric-total", text: "Across your organisation", theme: "brand" as const },
+  { label: "Departments", id: "metric-departments", text: "Teams working together", theme: "inherit" as const },
+  { label: "Offices", id: "metric-locations", text: "Places we connect", theme: "inherit" as const },
+  { label: "Onboarding", id: "metric-onboarding", text: "Starting their next chapter", theme: "inherit" as const },
+];
+---
+{render && <div class="people-overview_wrap">
+  <ContentWrapper variant="auto-width">
+    <Eyebrow>People &amp; organisation</Eyebrow>
+    <Heading tag="h1" variant="h2">People, at a glance.</Heading>
+    <Paragraph>One place for the people, teams, and details that keep us connected.</Paragraph>
+    <Button slot="column2" id="add-employee"><span aria-hidden="true">＋</span> Add employee</Button>
+  </ContentWrapper>
+  <Grid xsmall={2} large={4} aria-label="Employee summary" class="people-overview_metrics">
+    {metrics.map(({ label, id, text, theme }) => <Card eyebrow={label} heading={`<span class="text-style-h3" id="${id}">—</span>`} headingTag="h2" text={text} theme={theme} />)}
+  </Grid>
+</div>}
+<style is:global>
+  @layer components {
+    .people-overview_wrap { width: 100%; display: grid; gap: var(--space-7); }
+    .people-overview_metrics { gap: var(--space-3); }
+    .people-overview_wrap {
+      @media (width < 48rem) {
+        .people-overview_metrics .card_wrap { --_padding: var(--space-4); }
+      }
+    }
+  }
+</style>

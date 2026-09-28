@@ -19,6 +19,18 @@ Use Node.js 22.12.0 or newer, then run `npm ci`.
 The database binding is configured in `wrangler.json`. A local preview uses
 local D1 data, not the production employee database.
 
+For an isolated preview with fictional employees, run:
+
+```sh
+npm run build
+npx wrangler d1 execute jumpwin-hrdb --local --persist-to .wrangler/people-redesign --file tests/fixtures/people-preview.sql
+npx wrangler dev --local --persist-to .wrangler/people-redesign
+```
+
+The fixture is for local testing only; it is not a production schema migration.
+Stop the Worker before rebuilding Astro, then restart it after the build.
+Astro clears `dist` during a build, which can interrupt Wrangler's file watcher.
+
 ## Lumos
 
 Lumos components live directly in this repository. See
@@ -34,6 +46,9 @@ design tokens and shared styling are in `src/styles`.
 
 - `src/pages/index.astro`: dashboard page.
 - `src/components/content/HrisDashboard.astro`: employee UI and client logic.
+- `src/components/content/PeopleHeader.astro`: account and workspace navigation.
+- `src/components/content/PeopleOverview.astro`: overview and summary cards.
+- `src/components/content/PeopleDirectory.astro`: filters and responsive directory.
 - `src/layouts/BaseLayout.astro`: shared Lumos layout, wrapped by `AppLayout`.
 - `src/worker.ts`: Access authentication, HTML delivery, and API routing.
 - `src/employees.ts`: D1 employee API and validation.

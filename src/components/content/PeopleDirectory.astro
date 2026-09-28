@@ -1,0 +1,101 @@
+---
+import ContentWrapper from "@/components/wrapper/ContentWrapper.astro";
+import Heading from "@/components/typography/Heading.astro";
+import Paragraph from "@/components/typography/Paragraph.astro";
+import Input from "@/components/form/Input.astro";
+import Select from "@/components/form/Select.astro";
+import Button from "@/components/Button.astro";
+interface Props { /** Set to `false` to omit the component. */ render?: boolean; }
+const { render = true } = Astro.props;
+---
+{render && <div class="people-directory_wrap" id="directory">
+  <div class="people-directory_heading">
+    <ContentWrapper variant="auto-width">
+      <Heading tag="h2" variant="h4" id="directory-title">Your people</Heading>
+      <Paragraph variant="small">Find a colleague. Keep the details up to date.</Paragraph>
+      <Button slot="column2" emphasis="secondary" id="reload-employees">Refresh directory</Button>
+    </ContentWrapper>
+  </div>
+  <div class="people-directory_filters" role="search" aria-label="Filter employees">
+    <Input variant="search" label="Search people" id="employee-search" placeholder="Search name, role, or email…" autocomplete="off" />
+    <Select label="Department" id="department-filter" value="" options={[{ value: "", label: "All departments" }]} />
+    <Select label="Status" id="status-filter" value="all" options={[{ value: "all", label: "All statuses" }, "Active", "Onboarding", "Departing", "Inactive"]} />
+    <Button variant="link" id="clear-filters">Clear filters</Button>
+  </div>
+  <div class="people-directory_meta">
+    <Paragraph variant="small" id="employee-count" role="status">Loading your directory…</Paragraph>
+    <Paragraph variant="small" id="save-state" role="status" aria-live="polite"><span>Connecting…</span></Paragraph>
+  </div>
+  <div class="people-directory_notice" id="directory-error" role="alert" hidden>
+    <Heading tag="h3" variant="h5">We couldn’t refresh the directory</Heading>
+    <Paragraph><span id="directory-error-message">Please try again.</span></Paragraph>
+  </div>
+  <div class="hris-dashboard_table" id="directory-results" role="region" aria-labelledby="directory-title" aria-busy="true" tabindex="0">
+    <table role="table">
+      <thead role="rowgroup"><tr role="row">
+        <th scope="col" role="columnheader">Employee</th><th scope="col" role="columnheader">Role &amp; manager</th><th scope="col" role="columnheader">Department</th>
+        <th scope="col" role="columnheader">Office</th><th scope="col" role="columnheader">Join date</th><th scope="col" role="columnheader">Status</th>
+        <th scope="col" role="columnheader"><span class="sr-only">Actions</span></th>
+      </tr></thead>
+      <tbody id="employee-rows" role="rowgroup"></tbody>
+    </table>
+  </div>
+  <div id="empty-state" hidden>
+    <div class="people-directory_empty">
+      <Heading tag="h3" variant="h5" id="empty-title">No matching people</Heading>
+      <Paragraph><span id="empty-description">Try another name or clear your filters.</span></Paragraph>
+    </div>
+  </div>
+  <div class="people-directory_footer"><Paragraph variant="small">Select a person to view and update their record.</Paragraph><span class="text-style-small">Jumpwin · People workspace</span></div>
+</div>}
+<style is:global>
+  @layer components {
+    .people-directory_wrap { width: 100%; background: var(--background-2); border: var(--border-width) solid var(--border); border-radius: var(--radius-main); overflow: clip; scroll-margin-top: var(--space-5); }
+    .people-directory_heading { padding: var(--space-5); border-bottom: var(--border-width) solid var(--border); }
+    .people-directory_filters { display: grid; grid-template-columns: minmax(0, 2fr) repeat(2, minmax(0, 1fr)) auto; gap: var(--space-4); align-items: end; padding: var(--space-5) var(--space-5) var(--space-3); }
+    .people-directory_meta { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--space-2); padding: var(--space-3) var(--space-5); color: var(--text-2); }
+    .people-directory_meta p { margin: 0; }
+    .people-directory_notice { padding: var(--space-5); border-block: var(--border-width) solid var(--border); }
+    .people-directory_empty { padding: var(--space-8); text-align: center; }
+    .people-directory_footer { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-5); color: var(--text-2); border-top: var(--border-width) solid var(--border); }
+    .hris-dashboard_table {
+      width: 100%; overflow-x: auto;
+      table { width: 100%; border-collapse: collapse; font-size: var(--text-small); }
+      th, td { padding: var(--space-4) var(--space-3); text-align: start; vertical-align: middle; }
+      th { color: var(--text-2); font-weight: var(--primary-medium); background: var(--background); white-space: nowrap; }
+      tbody tr { border-top: var(--border-width) solid var(--border); cursor: pointer; }
+      tbody tr:hover { background: var(--background); }
+      tbody tr:focus-visible { outline: var(--focus-width) solid var(--text); outline-offset: calc(-1 * var(--focus-width)); }
+      td:first-child, th:first-child { padding-left: var(--space-5); }
+      td:last-child, th:last-child { padding-right: var(--space-5); }
+    }
+    .hris-dashboard_person { display: flex; align-items: center; gap: var(--space-3); min-width: 12rem; }
+    .hris-dashboard_person > span:last-child { display: grid; gap: var(--space-1); overflow-wrap: anywhere; }
+    .hris-dashboard_person small { color: var(--text-2); }
+    .hris-dashboard_avatar { display: grid; place-items: center; flex: none; width: 2.5em; aspect-ratio: 1; border-radius: var(--radius-small); background: var(--background); color: var(--text); font-weight: var(--primary-medium); }
+    .hris-dashboard_secondary { display: block; color: var(--text-2); margin-top: var(--space-1); }
+    .hris-dashboard_primary { display: block; }
+    .hris-dashboard_status { display: inline-flex; align-items: center; gap: 0.45em; white-space: nowrap; background: var(--background); border-radius: var(--radius-round); padding: 0.3em 0.7em; font-size: var(--text-small); }
+    .hris-dashboard_status::before { content: ""; width: 0.4em; aspect-ratio: 1; border-radius: 50%; background: currentColor; }
+    .hris-dashboard_status[data-status="Active"] { background: var(--brand-500); color: var(--brand-text); }
+    .hris-dashboard_status[data-status="Onboarding"] { outline: var(--border-width) solid var(--border); background: var(--background-2); }
+    .people-directory_wrap {
+      @media (width < 64rem) {
+        .people-directory_filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .people-directory_filters > :first-child { grid-column: 1 / -1; }
+        .people-directory_filters > .button_wrap { justify-self: start; }
+        .hris-dashboard_table table, .hris-dashboard_table tbody { display: block; }
+        .hris-dashboard_table thead { position: absolute; width: 0.0625rem; height: 0.0625rem; overflow: hidden; clip-path: inset(50%); }
+        .hris-dashboard_table tr { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); padding: var(--space-4); gap: var(--space-3); }
+        .hris-dashboard_table td { display: block; padding: 0; overflow-wrap: anywhere; }
+        .hris-dashboard_table td:first-child { grid-column: 1 / -1; padding: 0; }
+        .hris-dashboard_table td:last-child { padding: 0; }
+        .hris-dashboard_table td[data-label]::before { content: attr(data-label); display: block; color: var(--text-2); font-size: var(--text-small); margin-bottom: var(--space-1); }
+        .people-directory_footer > span { display: none; }
+      }
+      @media (width < 48rem) {
+        .people-directory_filters { grid-template-columns: minmax(0, 1fr); }
+      }
+    }
+  }
+</style>

@@ -2,12 +2,12 @@
 :root {
   /* Swatches */
   --light-100: #ffffff;
-  --light-200: #ebebeb;
-  --light-300: #d9d9d9;
-  --dark-700: #453e42;
-  --dark-800: #2f2b2d;
-  --dark-900: #1f1d1e;
-  --brand-500: #c6fb50;
+  --light-200: #ffffff;
+  --light-300: #f4f5ef;
+  --dark-700: #4d6257;
+  --dark-800: #293f35;
+  --dark-900: #183127;
+  --brand-500: #c4edaa;
   --brand-text: var(--dark-900);
 
   /* Typography primitives */
@@ -44,7 +44,7 @@
 
   /* Radius */
   --radius-small: 0.5rem;
-  --radius-main: 1rem;
+  --radius-main: 0.75rem;
   --radius-round: 100vw;
 
   /* Fluid scale range */

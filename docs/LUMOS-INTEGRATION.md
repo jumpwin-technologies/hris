@@ -38,6 +38,22 @@ official tagged GitHub archive was used for the source files.
 
 ## Using components
 
+The people workspace is composed from `PeopleHeader`, `PeopleOverview`, and
+`PeopleDirectory`, with employee state and the Lumos side-panel editor in
+`HrisDashboard`. Each custom component owns its styles in the `components`
+cascade layer. The green/neutral palette and radii are defined once in
+`base.css`; layout uses Lumos wrappers, spacing tokens, and Grid breakpoints.
+The directory retains table semantics when rows stack into mobile records.
+Search, department/status filters, filter reset, loading, empty, refresh errors,
+and save errors are explicit UI states. Concurrent saves and refreshes are
+guarded to prevent duplicate writes and stale refreshes overwriting a save.
+
+Cloudflare delivery remains the authenticated Worker with the `HRIS_DB` D1
+binding. HTML and employee responses use `private, no-store`; employee SQL uses
+bound parameters. No employee data is stored in browser persistence. See
+[Workers best practices](https://developers.cloudflare.com/workers/best-practices/workers-best-practices/)
+and [D1 prepared statements](https://developers.cloudflare.com/d1/worker-api/prepared-statements/).
+
 Read [LUMOS.md](../LUMOS.md) for the component and styling conventions. Import
 components directly from `@/components/`; for example:
 

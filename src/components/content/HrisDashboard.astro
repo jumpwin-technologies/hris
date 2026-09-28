@@ -1,13 +1,13 @@
 ---
 import Section from "@/components/wrapper/Section.astro";
-import Grid from "@/components/wrapper/Grid.astro";
-import ContentWrapper from "@/components/wrapper/ContentWrapper.astro";
+import PeopleHeader from "./PeopleHeader.astro";
+import PeopleOverview from "./PeopleOverview.astro";
 import ButtonWrapper from "@/components/wrapper/ButtonWrapper.astro";
 import Eyebrow from "@/components/typography/Eyebrow.astro";
 import Heading from "@/components/typography/Heading.astro";
 import Paragraph from "@/components/typography/Paragraph.astro";
 import Button from "@/components/Button.astro";
-import Card from "@/components/item/Card.astro";
+import PeopleDirectory from "./PeopleDirectory.astro";
 import Form from "@/components/form/Form.astro";
 import Fieldset from "@/components/form/Fieldset.astro";
 import Input from "@/components/form/Input.astro";
@@ -18,72 +18,20 @@ import AccordionItem from "@/components/interactive/AccordionItem.astro";
 import managerComboboxHelpersSource from "@/scripts/manager-combobox.js?raw";
 
 const statuses = ["Active", "Onboarding", "Departing", "Inactive"];
-const metrics = [
-  { label: "Total people", id: "metric-total" },
-  { label: "Departments", id: "metric-departments" },
-  { label: "Offices", id: "metric-locations" },
-  { label: "Onboarding", id: "metric-onboarding" },
-];
+
 ---
 
-<Section class="hris-dashboard_wrap" paddingTop="small" paddingBottom="small">
-  <ContentWrapper variant="auto-width">
-    <Eyebrow>Jumpwin / People</Eyebrow>
-    <Heading tag="h1" variant="h2">People dashboard</Heading>
-    <Paragraph>Keep employee information current in one simple workspace.</Paragraph>
-    <div slot="column2">
-      <ButtonWrapper>
-        <Button emphasis="secondary" id="identity-button" data-modal-open="identity-dialog">
-          <span id="identity-name">Signed in</span>
-        </Button>
-        <Button id="add-employee">Add employee</Button>
-      </ButtonWrapper>
-      <Paragraph variant="small" id="save-state" role="status" aria-live="polite"><span>Cloud database</span></Paragraph>
-    </div>
-  </ContentWrapper>
-
-  <Grid xsmall={1} small={2} large={4} aria-label="Employee summary">
-    {metrics.map(({ label, id }) => (
-      <Card eyebrow={label} heading={`<span id="${id}">—</span>`} headingTag="h2" />
-    ))}
-  </Grid>
-
-  <ContentWrapper>
-    <Heading tag="h2" variant="h4" id="directory-title">Employees</Heading>
-    <Paragraph variant="small" id="employee-count">Loading…</Paragraph>
-  </ContentWrapper>
-  <Grid xsmall={1} medium={3}>
-    <Input variant="search" label="Search people" id="employee-search" placeholder="Name, email, role or employee ID" autocomplete="off" />
-    <Select label="Department" id="department-filter" value="" options={[{ value: "", label: "All departments" }]} />
-    <Select label="Status" id="status-filter" value="" options={[{ value: "", label: "All statuses" }, ...statuses]} />
-  </Grid>
-
-  <div class="hris-dashboard_table" role="region" aria-labelledby="directory-title" tabindex="0">
-    <table>
-      <thead><tr>
-        <th scope="col">Employee</th><th scope="col">Role</th><th scope="col">Department</th>
-        <th scope="col">Office</th><th scope="col">Join date</th><th scope="col">Status</th>
-        <th scope="col"><span class="sr-only">Actions</span></th>
-      </tr></thead>
-      <tbody id="employee-rows"></tbody>
-    </table>
-  </div>
-  <div id="empty-state" hidden>
-    <Heading tag="h3" variant="h5">No employees found</Heading>
-    <Paragraph>Try a different search or filter.</Paragraph>
-  </div>
-  <ContentWrapper variant="auto-width">
-    <Paragraph variant="small">Changes save to the employee database.</Paragraph>
-    <Button slot="column2" variant="link" id="reload-employees">Reload employees</Button>
-  </ContentWrapper>
+<PeopleHeader />
+<Section class="hris-dashboard_wrap" paddingTop="small" paddingBottom="small" gap="7">
+  <PeopleOverview />
+  <PeopleDirectory />
 </Section>
-
-<Modal id="employee-dialog" aria-labelledby="dialog-title">
+<Modal id="employee-dialog" variant="side-panel" aria-labelledby="dialog-title">
   <Eyebrow>Employee record</Eyebrow>
   <Heading tag="h2" variant="h4" id="dialog-title">Edit employee</Heading>
   <Paragraph variant="small">Update the record, then save your changes.</Paragraph>
   <Form name="employee" id="employee-form" enhance={false} class="margin-top-6">
-    <Fieldset legend="Personal details" variant="columns">
+    <Fieldset legend="01 / Personal details">
       <Input label="Employee ID" name="id" required />
       <Input label="Display name" name="displayName" required />
       <Input label="Legal first name" name="legalFirstName" variant="first-name" />
@@ -91,7 +39,7 @@ const metrics = [
       <Input label="Other legal name" name="otherLegalName" />
       <Input label="Email" name="email" variant="email" />
     </Fieldset>
-    <Fieldset legend="Organisation" variant="columns">
+    <Fieldset legend="02 / Organisation">
       <Input label="Job title" name="jobTitle" />
       <Input label="Department" name="department" list="department-options" />
       <Input label="Cost center" name="costCenter" list="cost-center-options" />
@@ -104,7 +52,7 @@ const metrics = [
       <Input label="Office" name="office" list="office-options" />
       <Select label="Employment status" name="employmentStatus" value="Active" options={statuses} />
     </Fieldset>
-    <Fieldset legend="Employment dates" variant="columns">
+    <Fieldset legend="03 / Employment dates">
       <Input label="Join date" name="joinDate" variant="date" autocomplete="off" />
       <Input label="Pending join date" name="pendingJoinDate" variant="date" autocomplete="off" />
       <Input label="Leave date" name="leaveDate" variant="date" autocomplete="off" />
@@ -149,6 +97,8 @@ const metrics = [
 	let costCenters = [];
 	let editingId = null;
 	let originalManager = null;
+	let loading = false;
+	let saving = false;
 
 	const rows = document.querySelector('#employee-rows');
 	const search = document.querySelector('#employee-search');
@@ -244,18 +194,29 @@ const metrics = [
 	}
 
 	async function loadEmployees(showConfirmation = false) {
+		if (loading || saving) return;
+		loading = true;
+		document.querySelector('#reload-employees').disabled = true;
+		document.querySelector('#directory-results').setAttribute('aria-busy', 'true');
+		document.querySelector('#directory-error').hidden = true;
 		setDatabaseStatus('Loading…', 'saving');
 		try {
 			const result = await apiRequest('/api/employees');
 			employees = Array.isArray(result.employees) ? result.employees.map(normalizeEmployee) : [];
 			costCenters = Array.isArray(result.costCenters) ? result.costCenters.map(String) : [];
 			renderAll();
-			setDatabaseStatus('Cloud database');
+			setDatabaseStatus('Up to date');
 			if (showConfirmation) showToast('Employee data reloaded');
 		} catch (error) {
-			setDatabaseStatus('Database unavailable', 'error');
-			employeeCount.textContent = 'Unable to load employees';
+			setDatabaseStatus('Refresh failed', 'error');
+			employeeCount.textContent = employees.length ? `${employees.length} people · showing previously loaded data` : 'Directory unavailable';
+			document.querySelector('#directory-error').hidden = false;
+			document.querySelector('#directory-error-message').textContent = employees.length ? 'Your last loaded records are still shown. Use Refresh directory to try again.' : 'Use Refresh directory to try again. Your records have not been changed.';
 			showToast(error instanceof Error ? error.message : 'Database request failed');
+		} finally {
+			loading = false;
+			document.querySelector('#reload-employees').disabled = false;
+			document.querySelector('#directory-results').setAttribute('aria-busy', 'false');
 		}
 	}
 
@@ -352,7 +313,7 @@ const metrics = [
 		const selected = departmentFilter.value;
 		departmentFilter.replaceChildren(new Option('All departments', ''));
 		unique('department').forEach((department) => departmentFilter.add(new Option(department, department)));
-		departmentFilter.value = selected;
+		departmentFilter.value = unique('department').includes(selected) ? selected : '';
 
 		const lists = {
 			'department-options': unique('department'),
@@ -370,7 +331,7 @@ const metrics = [
 		const term = search.value.trim().toLocaleLowerCase();
 		return employees.filter((employee) => {
 			const searchable = [employee.displayName, employee.legalFirstName, employee.legalLastName, employee.otherLegalName, employee.id, employee.email, employee.jobTitle, employee.department].join(' ').toLocaleLowerCase();
-			return (!term || searchable.includes(term)) && (!departmentFilter.value || employee.department === departmentFilter.value) && (!statusFilter.value || employee.employmentStatus === statusFilter.value);
+			return (!term || searchable.includes(term)) && (!departmentFilter.value || employee.department === departmentFilter.value) && (statusFilter.value === 'all' || employee.employmentStatus === statusFilter.value);
 		});
 	}
 
@@ -378,6 +339,7 @@ const metrics = [
 		const tr = document.createElement('tr');
 		tr.tabIndex = 0;
 		tr.dataset.employeeId = employee.id;
+		tr.setAttribute('role', 'row');
 		tr.setAttribute('aria-label', `Edit ${employee.displayName || employee.id}`);
 
 		const personCell = document.createElement('td');
@@ -395,7 +357,9 @@ const metrics = [
 		const locationCell = createText('td', '', employee.office || '—');
 		const dateCell = createText('td', '', formatDate(employee.joinDate || employee.pendingJoinDate));
 		const statusCell = document.createElement('td');
-		statusCell.append(createText('span', 'hris-dashboard_status', employee.employmentStatus));
+		const statusBadge = createText('span', 'hris-dashboard_status', employee.employmentStatus);
+		statusBadge.dataset.status = employee.employmentStatus;
+		statusCell.append(statusBadge);
 		const actionCell = document.createElement('td');
 		const editButton = document.querySelector('#employee-edit-button').content.firstElementChild.cloneNode(true);
 		editButton.type = 'button';
@@ -404,6 +368,10 @@ const metrics = [
 		actionCell.append(editButton);
 
 		tr.append(personCell, roleCell, departmentCell, locationCell, dateCell, statusCell, actionCell);
+		[...tr.cells].forEach((cell, index) => {
+			cell.setAttribute('role', 'cell');
+			if (index > 0 && index < 6) cell.dataset.label = ['Employee', 'Role & manager', 'Department', 'Office', 'Join date', 'Status'][index];
+		});
 		tr.addEventListener('click', () => openEmployee(employee.id));
 		tr.addEventListener('keydown', (event) => { if (event.target === tr && event.key === 'Enter') openEmployee(employee.id); });
 		return tr;
@@ -414,9 +382,12 @@ const metrics = [
 		rows.replaceChildren(...visible.map(buildEmployeeRow));
 		employeeCount.textContent = `${visible.length} of ${employees.length} people`;
 		emptyState.hidden = visible.length > 0;
+		document.querySelector('#empty-title').textContent = employees.length ? 'No matching people' : 'Your directory starts here';
+		document.querySelector('#empty-description').textContent = employees.length ? 'Try another name or clear your filters.' : 'Add your first employee to bring your team together.';
 	}
 
 	function openEmployee(id = null) {
+		if (saving || loading) return;
 		editingId = id;
 		form.reset();
 		document.querySelector('#employee-form-error').hidden = true;
@@ -429,6 +400,7 @@ const metrics = [
 			if (form.elements[field]) form.elements[field].value = value ?? '';
 		}
 		dialog.showModal();
+		dialog.querySelector('[data-modal-scroll]').scrollTop = 0;
 		setTimeout(() => form.elements.id.focus(), 0);
 	}
 
@@ -447,6 +419,7 @@ const metrics = [
 
 	form.addEventListener('submit', async (event) => {
 		event.preventDefault();
+		if (saving || loading) return;
 		managerInput.value = normalizeManager(managerInput.value);
 		if (!validateManager()) {
 			managerInput.reportValidity();
@@ -460,6 +433,9 @@ const metrics = [
 		const formError = document.querySelector('#employee-form-error');
 		formError.hidden = true;
 		submitButton.disabled = true;
+		saving = true;
+		document.querySelector('#reload-employees').disabled = true;
+		form.setAttribute('aria-busy', 'true');
 		setDatabaseStatus('Saving…', 'saving');
 		try {
 			const result = await apiRequest(endpoint, {
@@ -472,20 +448,30 @@ const metrics = [
 			else employees.push(employee);
 			renderAll();
 			closeDialog();
-			setDatabaseStatus('Saved to D1');
-			showToast(existingIndex >= 0 ? 'Employee updated in D1' : 'Employee added to D1');
-			setTimeout(() => setDatabaseStatus('Cloud database'), 1500);
+			setDatabaseStatus('All changes saved');
+			showToast(existingIndex >= 0 ? 'Employee updated' : 'Employee added');
 		} catch (error) {
 			setDatabaseStatus('Save failed', 'error');
 			document.querySelector('#employee-form-error-message').textContent = error instanceof Error ? error.message : 'Employee save failed';
 			formError.hidden = false;
 			showToast(error instanceof Error ? error.message : 'Employee save failed');
 		} finally {
+			saving = false;
 			submitButton.disabled = false;
+			document.querySelector('#reload-employees').disabled = false;
+			form.setAttribute('aria-busy', 'false');
 		}
 	});
 
 	search.addEventListener('input', renderTable);
+	search.addEventListener('search', renderTable);
+	document.querySelector('#clear-filters').addEventListener('click', () => {
+		search.value = '';
+		departmentFilter.value = '';
+		statusFilter.value = 'all';
+		renderTable();
+		search.focus();
+	});
 	departmentFilter.addEventListener('change', renderTable);
 	statusFilter.addEventListener('change', renderTable);
 	managerInput.addEventListener('focus', renderManagerOptions);
@@ -538,27 +524,6 @@ const metrics = [
 
 <style is:global>
   @layer components {
-    .hris-dashboard_table {
-      width: 100%;
-      overflow-x: auto;
-      border-block: var(--border-width) solid var(--border);
-      table { width: 100%; min-width: 64rem; border-collapse: collapse; }
-      th, td { padding: var(--space-4); text-align: start; vertical-align: middle; }
-      th { color: var(--text-2); font-weight: var(--primary-medium); }
-      tbody tr { border-top: var(--border-width) solid var(--border); cursor: pointer; }
-      tbody tr:hover { background: var(--background-2); }
-      tbody tr:focus-visible { outline: var(--focus-width) solid var(--text); outline-offset: calc(-1 * var(--focus-width)); }
-    }
-    .hris-dashboard_person { display: flex; align-items: center; gap: var(--space-3); }
-    .hris-dashboard_person > span:last-child { display: grid; gap: var(--space-1); }
-    .hris-dashboard_avatar {
-      display: grid; place-items: center; flex: none;
-      width: 2.5em; aspect-ratio: 1; border-radius: var(--radius-round);
-      background: var(--background-2); color: var(--text);
-    }
-    .hris-dashboard_secondary { display: block; color: var(--text-2); }
-    .hris-dashboard_primary { display: block; }
-    .hris-dashboard_status { white-space: nowrap; }
     .hris-dashboard_manager { position: relative; display: grid; gap: var(--space-2); }
     .hris-dashboard_options {
       position: absolute; inset-inline: 0; top: 100%; z-index: 2;
