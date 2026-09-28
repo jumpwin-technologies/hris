@@ -1,27 +1,13 @@
 ---
-import "@/styles/global.css";
-import BaseHead from "@/components/BaseHead.astro";
-import SkipLink from "@/components/global/SkipLink.astro";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import type { ComponentProps } from "astro/types";
 
-interface Props {
-	title: string;
-	description: string;
-}
-
-const { title, description } = Astro.props;
+type Props = ComponentProps<typeof BaseLayout>;
 ---
 
-<!doctype html>
-<html lang="en" class="theme-light">
-	<head>
-		<BaseHead {title} {description} />
-	</head>
-	<body>
-		<SkipLink />
-		<slot name="header" />
-		<main id="main" tabindex="-1">
-			<slot />
-		</main>
-		<slot name="after-main" />
-	</body>
-</html>
+<BaseLayout {...Astro.props}>
+  <slot name="head" slot="head" />
+  <slot name="header" slot="header" />
+  <slot />
+  <slot name="after-main" slot="after-main" />
+</BaseLayout>

@@ -1,0 +1,60 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import Nav from "@/components/global/Nav.astro";
+import Footer from "@/components/global/Footer.astro";
+import Section from "@/components/wrapper/Section.astro";
+import ContentWrapper from "@/components/wrapper/ContentWrapper.astro";
+import ButtonWrapper from "@/components/wrapper/ButtonWrapper.astro";
+import Button from "@/components/Button.astro";
+import Card from "@/components/item/Card.astro";
+import Form from "@/components/form/Form.astro";
+import Fieldset from "@/components/form/Fieldset.astro";
+import Input from "@/components/form/Input.astro";
+import Select from "@/components/form/Select.astro";
+import Choice from "@/components/form/Choice.astro";
+import Range from "@/components/form/Range.astro";
+import Textarea from "@/components/form/Textarea.astro";
+import Accordion from "@/components/interactive/Accordion.astro";
+import AccordionItem from "@/components/interactive/AccordionItem.astro";
+import Dropdown from "@/components/interactive/Dropdown.astro";
+import Modal from "@/components/interactive/Modal.astro";
+import Slider from "@/components/interactive/Slider.astro";
+import Tabs from "@/components/interactive/Tabs.astro";
+import TabLink from "@/components/interactive/TabLink.astro";
+import Marquee from "@/components/interactive/Marquee.astro";
+import RichText from "@/components/typography/RichText.astro";
+import FormattedDate from "@/components/utility/FormattedDate.astro";
+---
+
+<BaseLayout title="Lumos integration test" noindex>
+  <Nav slot="header" />
+  <Section>
+    <ContentWrapper>
+      <Card heading="Lumos ready" text="Reusable HRIS components" />
+      <RichText><p>Content uses the shared typography system.</p></RichText>
+      <FormattedDate date={new Date("2026-09-28T12:00:00Z")} />
+      <Form name="lumos-smoke">
+        <Fieldset legend="Employee details">
+          <Input variant="email" label="Work email" name="email" required />
+          <Select label="Department" options={["IT", "People"]} />
+          <Choice label="Active" checked />
+          <Range label="Hours" />
+          <Textarea label="Notes" />
+        </Fieldset>
+        <ButtonWrapper><Button type="submit">Save</Button></ButtonWrapper>
+      </Form>
+      <Accordion><AccordionItem heading="Details"><p>Employee details</p></AccordionItem></Accordion>
+      <Dropdown label="Actions"><p>Available actions</p></Dropdown>
+      <Button data-modal-open="smoke-dialog">Open details</Button>
+      <Modal id="smoke-dialog" label="Employee details"><p>Details</p></Modal>
+      <Tabs>
+        <Fragment slot="links"><TabLink>Profile</TabLink><TabLink>History</TabLink></Fragment>
+        <div>Profile content</div><div>History content</div>
+      </Tabs>
+      <Slider label="Highlights"><Card heading="One" /><Card heading="Two" /></Slider>
+      <Marquee><p>Jumpwin</p><p>People</p></Marquee>
+      <Input render={false} label="Hidden field" />
+    </ContentWrapper>
+  </Section>
+  <Footer slot="after-main" />
+</BaseLayout>

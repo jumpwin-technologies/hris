@@ -1,64 +1,50 @@
-# Astro Starter Kit: Blog
+# Jumpwin HRIS
 
-[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/cloudflare/templates/tree/main/astro-blog-starter-template)
+An employee dashboard built with Astro 7, Lumos 0.0.4, and a custom Cloudflare
+Worker with Access authentication and D1 storage.
 
-![Astro Template Preview](https://github.com/withastro/astro/assets/2244813/ff10799f-a816-4703-b967-c78997e8323d)
+## Getting started
 
-<!-- dash-content-start -->
+Use Node.js 22.12.0 or newer, then run `npm ci`.
 
-Create a blog with Astro and deploy it on Cloudflare Workers as a [static website](https://developers.cloudflare.com/workers/static-assets/).
+- `npm run dev`: preview the Astro UI at localhost:4321.
+- `npm run preview`: build and preview the full Worker locally, including the
+  configured development Access identity and local D1 binding.
+- `npm test`: build and run the HRIS regressions and Lumos component build test.
+- `npm run check`: build, check Astro components and TypeScript, and dry-run the
+  Worker deployment.
+- `npm run cf-typegen`: regenerate Worker types after changing bindings.
+- `npm run build` then `npm run deploy`: build and deploy to Cloudflare.
 
-Features:
+The database binding is configured in `wrangler.json`. A local preview uses
+local D1 data, not the production employee database.
 
-- ✅ Minimal styling (make it your own!)
-- ✅ 100/100 Lighthouse performance
-- ✅ SEO-friendly with canonical URLs and OpenGraph data
-- ✅ Sitemap support
-- ✅ RSS Feed support
-- ✅ Markdown & MDX support
-- ✅ Built-in Observability logging
+## Lumos
 
-<!-- dash-content-end -->
+Lumos components live directly in this repository. See
+[Lumos integration](docs/LUMOS-INTEGRATION.md) for the imported source,
+HRIS adaptations, usage examples, validation, and future updates. Read
+[LUMOS.md](LUMOS.md) before building new components or styles.
 
-## Getting Started
+The framework includes layout, typography, buttons, cards, forms, media,
+navigation, and interactive components. Site metadata is in `src/consts.ts`;
+design tokens and shared styling are in `src/styles`.
 
-Outside of this repo, you can start a new project with this template using [C3](https://developers.cloudflare.com/pages/get-started/c3/) (the `create-cloudflare` CLI):
+## Application structure
 
-```bash
-npm create cloudflare@latest -- --template=cloudflare/templates/astro-blog-starter-template
-```
+- `src/pages/index.astro`: dashboard page.
+- `src/components/content/HrisDashboard.astro`: employee UI and client logic.
+- `src/layouts/BaseLayout.astro`: shared Lumos layout, wrapped by `AppLayout`.
+- `src/worker.ts`: Access authentication, HTML delivery, and API routing.
+- `src/employees.ts`: D1 employee API and validation.
+- `tests/fixtures/lumos-components.astro`: isolated build fixture, not a public route.
 
-A live public deployment of this template is available at [https://astro-blog-starter-template.templates.workers.dev](https://astro-blog-starter-template.templates.workers.dev)
+Astro generates `dist/index.html`. The custom Worker embeds that HTML and serves
+its explicit asset routes. It does not automatically serve every file in
+`public` or `dist`. No Astro server adapter is required for this arrangement.
 
-## 🚀 Project Structure
+## Credits
 
-Astro looks for `.astro` or `.md` files in the `src/pages/` directory. Each page is exposed as a route based on its file name.
-
-There's nothing special about `src/components/`, but that's where we like to put any Astro/React/Vue/Svelte/Preact components.
-
-The `src/content/` directory contains "collections" of related Markdown and MDX documents. Use `getCollection()` to retrieve posts from `src/content/blog/`, and type-check your frontmatter using an optional schema. See [Astro's Content Collections docs](https://docs.astro.build/en/guides/content-collections/) to learn more.
-
-Any static assets, like images, can be placed in the `public/` directory.
-
-## 🧞 Commands
-
-All commands are run from the root of the project, from a terminal:
-
-| Command                           | Action                                           |
-| :-------------------------------- | :----------------------------------------------- |
-| `npm install`                     | Installs dependencies                            |
-| `npm run dev`                     | Starts local dev server at `localhost:4321`      |
-| `npm run build`                   | Build your production site to `./dist/`          |
-| `npm run preview`                 | Preview your build locally, before deploying     |
-| `npm run astro ...`               | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help`         | Get help using the Astro CLI                     |
-| `npm run build && npm run deploy` | Deploy your production site to Cloudflare        |
-| `npm wrangler tail`               | View real-time logs for all Workers              |
-
-## 👀 Want to learn more?
-
-Check out [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
-
-## Credit
-
-This theme is based off of the lovely [Bear Blog](https://github.com/HermanMartinus/bearblog/).
+Lumos for Astro is MIT licensed; its notice is retained in
+[licenses/Lumos-MIT.txt](licenses/Lumos-MIT.txt). The project originally started
+from Cloudflare's Astro blog starter, based on Bear Blog.

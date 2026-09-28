@@ -1,4 +1,4 @@
-import dashboardHtml from "../dist/index.html";
+import dashboardHtml from "../dist/index.html?raw";
 import atkinsonBold from "../public/fonts/atkinson-bold.woff";
 import atkinsonRegular from "../public/fonts/atkinson-regular.woff";
 import { handleEmployeesApi } from "./employees";
