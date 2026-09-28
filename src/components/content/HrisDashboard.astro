@@ -1,0 +1,785 @@
+---
+import Section from "@/components/wrapper/Section.astro";
+import Grid from "@/components/wrapper/Grid.astro";
+import Eyebrow from "@/components/typography/Eyebrow.astro";
+import Heading from "@/components/typography/Heading.astro";
+import Paragraph from "@/components/typography/Paragraph.astro";
+import Button from "@/components/Button.astro";
+import managerComboboxHelpersSource from "@/scripts/manager-combobox.js?raw";
+---
+
+<header class="topbar">
+	<button class="identity-button" id="identity-button" type="button" aria-haspopup="dialog">
+		<span class="identity-avatar" id="identity-avatar" aria-hidden="true">?</span>
+		<span class="identity-copy">
+			<strong id="identity-name">Signed in</strong>
+			<small id="identity-email">Cloudflare Access</small>
+		</span>
+		<svg aria-hidden="true" viewBox="0 0 24 24"><path d="m8 10 4 4 4-4" /></svg>
+	</button>
+	<div class="local-status" id="save-state" role="status" aria-live="polite">
+		<span class="status-dot"></span>
+		<span>Cloud database</span>
+	</div>
+</header>
+
+<Section class="hris-dashboard_wrap" paddingTop="none" paddingBottom="none">
+	<div class="page-heading">
+		<div>
+			<Eyebrow>Employee directory</Eyebrow>
+			<Heading tag="h1" variant="h3">People dashboard</Heading>
+			<Paragraph variant="small">Keep employee information current in one simple workspace.</Paragraph>
+		</div>
+		<Button class="primary" id="add-employee" type="button">
+			<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
+			Add employee
+		</Button>
+	</div>
+
+	<Grid class="metrics" xsmall={2} large={4} aria-label="Employee summary">
+		<article class="metric-card">
+			<span class="metric-icon green"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" /></svg></span>
+			<div><span>Total people</span><strong id="metric-total">—</strong></div>
+		</article>
+		<article class="metric-card">
+			<span class="metric-icon blue"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M3 21h18M5 21V7l7-4v18M19 21V11l-7-4M8 9h1M8 13h1M8 17h1M15 13h1M15 17h1" /></svg></span>
+			<div><span>Departments</span><strong id="metric-departments">—</strong></div>
+		</article>
+		<article class="metric-card">
+			<span class="metric-icon amber"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z" /><circle cx="12" cy="10" r="2.5" /></svg></span>
+			<div><span>Offices</span><strong id="metric-locations">—</strong></div>
+		</article>
+		<article class="metric-card">
+			<span class="metric-icon violet"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v15H3V6a2 2 0 0 1 2-2Z" /><path d="m9 16 2 2 4-4" /></svg></span>
+			<div><span>Onboarding</span><strong id="metric-onboarding">—</strong></div>
+		</article>
+	</Grid>
+
+	<section class="directory-card" aria-labelledby="directory-title">
+		<div class="directory-toolbar">
+			<div>
+				<h2 id="directory-title">Employees</h2>
+				<p id="employee-count">Loading…</p>
+			</div>
+			<div class="filters">
+				<label class="search-box" for="employee-search">
+					<svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></svg>
+					<input id="employee-search" type="search" autocomplete="off" placeholder="Search people" />
+				</label>
+				<label class="select-wrap">
+					<span class="sr-only">Department</span>
+					<select id="department-filter"><option value="">All departments</option></select>
+					<svg aria-hidden="true" viewBox="0 0 24 24"><path d="m8 10 4 4 4-4" /></svg>
+				</label>
+				<label class="select-wrap">
+					<span class="sr-only">Status</span>
+					<select id="status-filter">
+						<option value="">All statuses</option>
+						<option>Active</option>
+						<option>Onboarding</option>
+						<option>Departing</option>
+						<option>Inactive</option>
+					</select>
+					<svg aria-hidden="true" viewBox="0 0 24 24"><path d="m8 10 4 4 4-4" /></svg>
+				</label>
+			</div>
+		</div>
+
+		<div class="table-wrap">
+			<table>
+				<thead>
+					<tr>
+						<th scope="col">Employee</th>
+						<th scope="col">Role</th>
+						<th scope="col">Department</th>
+						<th scope="col">Office</th>
+						<th scope="col">Join date</th>
+						<th scope="col">Status</th>
+						<th scope="col"><span class="sr-only">Actions</span></th>
+					</tr>
+				</thead>
+				<tbody id="employee-rows"></tbody>
+			</table>
+			<div class="empty-state" id="empty-state" hidden>
+				<svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></svg>
+				<h3>No employees found</h3>
+				<p>Try a different search or filter.</p>
+			</div>
+		</div>
+
+		<footer class="directory-footer">
+			<p><span class="status-dot"></span> Changes save automatically to Cloudflare D1</p>
+			<button class="text-button" id="reload-employees" type="button">Reload database</button>
+		</footer>
+	</section>
+</Section>
+
+<dialog id="employee-dialog">
+	<form id="employee-form" method="dialog">
+		<header class="dialog-header">
+			<div>
+				<p class="eyebrow">Employee record</p>
+				<h2 id="dialog-title">Edit employee</h2>
+			</div>
+			<button class="icon-button" id="close-dialog" type="button" aria-label="Close">
+				<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18" /></svg>
+			</button>
+		</header>
+
+		<div class="form-grid">
+			<label><span>Employee ID</span><input name="id" required /></label>
+			<label><span>Display name</span><input name="displayName" required /></label>
+			<label><span>Legal first name</span><input name="legalFirstName" /></label>
+			<label><span>Legal last name</span><input name="legalLastName" /></label>
+			<label class="wide"><span>Other legal name</span><input name="otherLegalName" /></label>
+			<label class="wide"><span>Email</span><input name="email" type="email" /></label>
+			<label><span>Job title</span><input name="jobTitle" /></label>
+			<label><span>Department</span><input name="department" list="department-options" /></label>
+			<label><span>Cost center</span><input name="costCenter" list="cost-center-options" /></label>
+			<div class="form-field">
+				<label for="manager-input">Manager</label>
+				<div class="manager-combobox">
+					<input id="manager-input" name="manager" type="search" role="combobox" aria-autocomplete="list" aria-controls="manager-options" aria-expanded="false" autocomplete="off" placeholder="Search employees" />
+					<button class="combobox-toggle" id="manager-toggle" type="button" aria-label="Show manager options" aria-controls="manager-options" aria-expanded="false">
+						<svg aria-hidden="true" viewBox="0 0 24 24"><path d="m8 10 4 4 4-4" /></svg>
+					</button>
+					<div class="combobox-options" id="manager-options" role="listbox" hidden></div>
+				</div>
+			</div>
+			<label><span>Branch</span><input name="branch" list="branch-options" /></label>
+			<label><span>Office</span><input name="office" list="office-options" /></label>
+			<label><span>Join date</span><input name="joinDate" type="date" /></label>
+			<label><span>Pending join date</span><input name="pendingJoinDate" type="date" /></label>
+			<label><span>Leave date</span><input name="leaveDate" type="date" /></label>
+			<label><span>Pending leave date</span><input name="pendingLeaveDate" type="date" /></label>
+			<label><span>Employment status</span><select name="employmentStatus"><option>Active</option><option>Onboarding</option><option>Departing</option><option>Inactive</option></select></label>
+		</div>
+
+		<datalist id="department-options"></datalist>
+		<datalist id="cost-center-options"></datalist>
+		<datalist id="branch-options"></datalist>
+		<datalist id="office-options"></datalist>
+
+		<footer class="dialog-actions">
+			<Button emphasis="secondary" class="secondary" id="cancel-dialog" type="button">Cancel</Button>
+			<Button class="primary" type="submit">Save employee</Button>
+		</footer>
+	</form>
+</dialog>
+
+<dialog class="identity-dialog" id="identity-dialog">
+	<header class="dialog-header">
+		<div>
+			<p class="eyebrow">Cloudflare Access</p>
+			<h2>Authenticated identity</h2>
+		</div>
+		<button class="icon-button" id="close-identity-dialog" type="button" aria-label="Close">
+			<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18" /></svg>
+		</button>
+	</header>
+	<div class="identity-details">
+		<div class="identity-hero">
+			<span class="identity-avatar large" id="identity-dialog-avatar" aria-hidden="true">?</span>
+			<div><strong id="identity-dialog-name">Signed-in user</strong><span id="identity-dialog-email">—</span></div>
+		</div>
+		<dl>
+			<div><dt>Access identity ID</dt><dd id="identity-id">—</dd></div>
+			<div><dt>Application audience</dt><dd id="identity-audience">—</dd></div>
+			<div><dt>Entra groups</dt><dd id="identity-groups">None returned</dd></div>
+		</dl>
+		<details>
+			<summary>View identity payload</summary>
+			<pre id="identity-json"></pre>
+		</details>
+	</div>
+</dialog>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script is:inline id="access-identity-data" type="application/json">__ACCESS_IDENTITY_JSON__</script>
+<script is:inline set:html={managerComboboxHelpersSource}></script>
+
+<script is:inline>
+	let employees = [];
+	let costCenters = [];
+	let editingId = null;
+	let originalManager = null;
+
+	const rows = document.querySelector('#employee-rows');
+	const search = document.querySelector('#employee-search');
+	const departmentFilter = document.querySelector('#department-filter');
+	const statusFilter = document.querySelector('#status-filter');
+	const employeeCount = document.querySelector('#employee-count');
+	const emptyState = document.querySelector('#empty-state');
+	const dialog = document.querySelector('#employee-dialog');
+	const form = document.querySelector('#employee-form');
+	const toast = document.querySelector('#toast');
+	const saveState = document.querySelector('#save-state');
+	const identityDialog = document.querySelector('#identity-dialog');
+	const managerInput = document.querySelector('#manager-input');
+	const managerToggle = document.querySelector('#manager-toggle');
+	const managerOptions = document.querySelector('#manager-options');
+	const { isManagerAllowed, managerCandidates, nextManagerIndex, normalizeManager } = globalThis.managerComboboxHelpers;
+	let visibleManagerNames = [];
+	let activeManagerIndex = -1;
+
+	function getAccessIdentity() {
+		const element = document.querySelector('#access-identity-data');
+		try {
+			return JSON.parse(element?.textContent || '');
+		} catch {
+			return null;
+		}
+	}
+
+	function displayName(identity) {
+		return identity?.name || identity?.email?.split('@')[0] || 'Signed-in user';
+	}
+
+	function groupNames(groups) {
+		if (!Array.isArray(groups)) return [];
+		return groups.map((group) => typeof group === 'string' ? group : group?.name || group?.id).filter(Boolean);
+	}
+
+	function renderAccessIdentity() {
+		const access = getAccessIdentity();
+		const identity = access?.identity;
+		if (!identity) return;
+
+		const name = displayName(identity);
+		const avatar = initials(name);
+		const groups = groupNames(identity.groups);
+		document.querySelector('#identity-name').textContent = name;
+		document.querySelector('#identity-email').textContent = identity.email || 'Cloudflare Access';
+		document.querySelector('#identity-avatar').textContent = avatar;
+		document.querySelector('#identity-dialog-avatar').textContent = avatar;
+		document.querySelector('#identity-dialog-name').textContent = name;
+		document.querySelector('#identity-dialog-email').textContent = identity.email || '—';
+		document.querySelector('#identity-id').textContent = identity.user_uuid || identity.id || identity.sub || '—';
+		document.querySelector('#identity-audience').textContent = access.aud || '—';
+		document.querySelector('#identity-groups').textContent = groups.length ? groups.join(', ') : 'None returned';
+		document.querySelector('#identity-json').textContent = JSON.stringify(access, null, 2);
+	}
+
+	function inferEmploymentStatus(employee) {
+		if (employee.pendingLeaveDate) return 'Departing';
+		if (employee.pendingJoinDate) return 'Onboarding';
+		if (employee.leaveDate) return 'Inactive';
+		return 'Active';
+	}
+
+	function normalizeEmployee(employee) {
+		return {
+			id: String(employee.id || ''),
+			legalFirstName: String(employee.legalFirstName || ''),
+			legalLastName: String(employee.legalLastName || ''),
+			otherLegalName: String(employee.otherLegalName || ''),
+			displayName: String(employee.displayName || ''),
+			email: String(employee.email || ''),
+			branch: String(employee.branch || ''),
+			office: String(employee.office || ''),
+			jobTitle: String(employee.jobTitle || ''),
+			costCenter: String(employee.costCenter || ''),
+			department: String(employee.department || ''),
+			manager: String(employee.manager || ''),
+			joinDate: String(employee.joinDate || ''),
+			pendingJoinDate: String(employee.pendingJoinDate || ''),
+			leaveDate: String(employee.leaveDate || ''),
+			pendingLeaveDate: String(employee.pendingLeaveDate || ''),
+			employmentStatus: employee.employmentStatus || inferEmploymentStatus(employee),
+		};
+	}
+
+	function setDatabaseStatus(message, state = '') {
+		saveState.classList.toggle('error', state === 'error');
+		saveState.classList.toggle('saving', state === 'saving');
+		saveState.querySelector('span:last-child').textContent = message;
+	}
+
+	async function apiRequest(url, options) {
+		const response = await fetch(url, options);
+		const result = await response.json().catch(() => ({}));
+		if (!response.ok) throw new Error(result.message || 'Database request failed');
+		return result;
+	}
+
+	async function loadEmployees(showConfirmation = false) {
+		setDatabaseStatus('Loading…', 'saving');
+		try {
+			const result = await apiRequest('/api/employees');
+			employees = Array.isArray(result.employees) ? result.employees.map(normalizeEmployee) : [];
+			costCenters = Array.isArray(result.costCenters) ? result.costCenters.map(String) : [];
+			renderAll();
+			setDatabaseStatus('Cloud database');
+			if (showConfirmation) showToast('Employee data reloaded');
+		} catch (error) {
+			setDatabaseStatus('Database unavailable', 'error');
+			employeeCount.textContent = 'Unable to load employees';
+			showToast(error instanceof Error ? error.message : 'Database request failed');
+		}
+	}
+
+	function unique(field) {
+		return [...new Set(employees.map((employee) => employee[field]).filter(Boolean))].sort();
+	}
+
+	function closeManagerOptions() {
+		managerOptions.hidden = true;
+		managerInput.setAttribute('aria-expanded', 'false');
+		managerToggle.setAttribute('aria-expanded', 'false');
+		managerToggle.setAttribute('aria-label', 'Show manager options');
+		managerInput.removeAttribute('aria-activedescendant');
+		activeManagerIndex = -1;
+	}
+
+	function selectManager(name) {
+		managerInput.value = name;
+		managerInput.setCustomValidity('');
+		closeManagerOptions();
+		managerInput.focus();
+	}
+
+	function setActiveManager(index) {
+		if (!visibleManagerNames.length) return;
+		activeManagerIndex = index;
+		const options = [...managerOptions.querySelectorAll('[role="option"]')];
+		options.forEach((option, optionIndex) => option.setAttribute('aria-selected', String(optionIndex === activeManagerIndex)));
+		const activeOption = options[activeManagerIndex];
+		managerInput.setAttribute('aria-activedescendant', activeOption.id);
+		activeOption.scrollIntoView({ block: 'nearest' });
+	}
+
+	function renderManagerOptions() {
+		const query = managerInput.value.trim().toLocaleLowerCase();
+		visibleManagerNames = managerCandidates(employees, editingId).filter((name) => !query || name.toLocaleLowerCase().includes(query));
+		activeManagerIndex = -1;
+		managerOptions.replaceChildren();
+
+		if (!visibleManagerNames.length) {
+			managerOptions.append(createText('div', 'combobox-empty', 'No matching employees'));
+		} else {
+			visibleManagerNames.forEach((name, index) => {
+				const option = createText('button', 'combobox-option', name);
+				option.type = 'button';
+				option.id = `manager-option-${index}`;
+				option.tabIndex = -1;
+				option.setAttribute('role', 'option');
+				option.setAttribute('aria-selected', 'false');
+				option.addEventListener('pointerdown', (event) => event.preventDefault());
+				option.addEventListener('click', () => selectManager(name));
+				managerOptions.append(option);
+			});
+		}
+
+		managerOptions.hidden = false;
+		managerInput.setAttribute('aria-expanded', 'true');
+		managerToggle.setAttribute('aria-expanded', 'true');
+		managerToggle.setAttribute('aria-label', 'Hide manager options');
+	}
+
+	function validateManager() {
+		const valid = isManagerAllowed(managerInput.value, managerCandidates(employees, editingId), originalManager);
+		managerInput.setCustomValidity(valid ? '' : 'Select a manager from the employee list.');
+		return valid;
+	}
+
+	function formatDate(value) {
+		if (!value) return '—';
+		const date = new Date(`${value}T00:00:00`);
+		if (Number.isNaN(date.getTime())) return value;
+		return new Intl.DateTimeFormat('en', { year: 'numeric', month: 'short', day: 'numeric' }).format(date);
+	}
+
+	function initials(name) {
+		return String(name || '?').split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join('').toUpperCase();
+	}
+
+	function createText(tag, className, text) {
+		const element = document.createElement(tag);
+		if (className) element.className = className;
+		element.textContent = text;
+		return element;
+	}
+
+	function renderMetrics() {
+		document.querySelector('#metric-total').textContent = employees.length;
+		document.querySelector('#metric-departments').textContent = unique('department').length;
+		document.querySelector('#metric-locations').textContent = unique('office').length;
+		document.querySelector('#metric-onboarding').textContent = employees.filter((employee) => employee.employmentStatus === 'Onboarding').length;
+	}
+
+	function renderFilterOptions() {
+		const selected = departmentFilter.value;
+		departmentFilter.replaceChildren(new Option('All departments', ''));
+		unique('department').forEach((department) => departmentFilter.add(new Option(department, department)));
+		departmentFilter.value = selected;
+
+		const lists = {
+			'department-options': unique('department'),
+			'cost-center-options': [...new Set([...costCenters, ...unique('costCenter')])].sort(),
+			'branch-options': unique('branch'),
+			'office-options': unique('office'),
+		};
+		Object.entries(lists).forEach(([id, values]) => {
+			const list = document.getElementById(id);
+			list.replaceChildren(...values.map((value) => new Option(value)));
+		});
+	}
+
+	function filteredEmployees() {
+		const term = search.value.trim().toLocaleLowerCase();
+		return employees.filter((employee) => {
+			const searchable = [employee.displayName, employee.legalFirstName, employee.legalLastName, employee.otherLegalName, employee.id, employee.email, employee.jobTitle, employee.department].join(' ').toLocaleLowerCase();
+			return (!term || searchable.includes(term)) && (!departmentFilter.value || employee.department === departmentFilter.value) && (!statusFilter.value || employee.employmentStatus === statusFilter.value);
+		});
+	}
+
+	function buildEmployeeRow(employee, index) {
+		const tr = document.createElement('tr');
+		tr.tabIndex = 0;
+		tr.dataset.employeeId = employee.id;
+		tr.setAttribute('aria-label', `Edit ${employee.displayName || employee.id}`);
+
+		const personCell = document.createElement('td');
+		const person = document.createElement('div');
+		person.className = 'person';
+		const avatar = createText('span', `avatar tone-${index % 5}`, initials(employee.displayName));
+		const personCopy = document.createElement('span');
+		personCopy.append(createText('strong', '', employee.displayName || 'Unnamed employee'), createText('small', '', `${employee.id}${employee.email ? ` · ${employee.email}` : ''}`));
+		person.append(avatar, personCopy);
+		personCell.append(person);
+
+		const roleCell = document.createElement('td');
+		roleCell.append(createText('strong', 'cell-primary', employee.jobTitle || '—'), createText('small', 'cell-secondary', employee.manager ? `Reports to ${employee.manager}` : 'No manager'));
+		const departmentCell = createText('td', '', employee.department || '—');
+		const locationCell = createText('td', '', employee.office || '—');
+		const dateCell = createText('td', '', formatDate(employee.joinDate || employee.pendingJoinDate));
+		const statusCell = document.createElement('td');
+		statusCell.append(createText('span', `status-badge ${employee.employmentStatus.toLowerCase()}`, employee.employmentStatus));
+		const actionCell = document.createElement('td');
+		const editButton = document.createElement('button');
+		editButton.type = 'button';
+		editButton.className = 'edit-button';
+		editButton.textContent = 'Edit';
+		editButton.addEventListener('click', (event) => { event.stopPropagation(); openEmployee(employee.id); });
+		actionCell.append(editButton);
+
+		tr.append(personCell, roleCell, departmentCell, locationCell, dateCell, statusCell, actionCell);
+		tr.addEventListener('click', () => openEmployee(employee.id));
+		tr.addEventListener('keydown', (event) => { if (event.key === 'Enter') openEmployee(employee.id); });
+		return tr;
+	}
+
+	function renderTable() {
+		const visible = filteredEmployees();
+		rows.replaceChildren(...visible.map(buildEmployeeRow));
+		employeeCount.textContent = `${visible.length} of ${employees.length} people`;
+		emptyState.hidden = visible.length > 0;
+	}
+
+	function openEmployee(id = null) {
+		editingId = id;
+		form.reset();
+		managerInput.setCustomValidity('');
+		closeManagerOptions();
+		const employee = id ? employees.find((item) => item.id === id) : normalizeEmployee({ employmentStatus: 'Active' });
+		originalManager = id ? employee.manager : null;
+		document.querySelector('#dialog-title').textContent = id ? 'Edit employee' : 'Add employee';
+		for (const [field, value] of Object.entries(employee)) {
+			if (form.elements[field]) form.elements[field].value = value ?? '';
+		}
+		dialog.showModal();
+		setTimeout(() => form.elements.id.focus(), 0);
+	}
+
+	function closeDialog() {
+		closeManagerOptions();
+		dialog.close();
+		editingId = null;
+		originalManager = null;
+	}
+
+	function showToast(message) {
+		toast.textContent = message;
+		toast.classList.add('show');
+		setTimeout(() => toast.classList.remove('show'), 2200);
+	}
+
+	form.addEventListener('submit', async (event) => {
+		event.preventDefault();
+		managerInput.value = normalizeManager(managerInput.value);
+		if (!validateManager()) {
+			managerInput.reportValidity();
+			managerInput.focus();
+			return;
+		}
+		const values = Object.fromEntries(new FormData(form).entries());
+		const existingIndex = editingId ? employees.findIndex((employee) => employee.id === editingId) : -1;
+		const endpoint = existingIndex >= 0 ? `/api/employees/${encodeURIComponent(editingId)}` : '/api/employees';
+		const submitButton = form.querySelector('button[type="submit"]');
+		submitButton.disabled = true;
+		setDatabaseStatus('Saving…', 'saving');
+		try {
+			const result = await apiRequest(endpoint, {
+				method: existingIndex >= 0 ? 'PUT' : 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(values),
+			});
+			const employee = normalizeEmployee(result.employee);
+			if (existingIndex >= 0) employees[existingIndex] = employee;
+			else employees.push(employee);
+			renderAll();
+			closeDialog();
+			setDatabaseStatus('Saved to D1');
+			showToast(existingIndex >= 0 ? 'Employee updated in D1' : 'Employee added to D1');
+			setTimeout(() => setDatabaseStatus('Cloud database'), 1500);
+		} catch (error) {
+			setDatabaseStatus('Save failed', 'error');
+			showToast(error instanceof Error ? error.message : 'Employee save failed');
+		} finally {
+			submitButton.disabled = false;
+		}
+	});
+
+	search.addEventListener('input', renderTable);
+	departmentFilter.addEventListener('change', renderTable);
+	statusFilter.addEventListener('change', renderTable);
+	managerInput.addEventListener('focus', renderManagerOptions);
+	managerInput.addEventListener('input', () => {
+		managerInput.setCustomValidity('');
+		renderManagerOptions();
+	});
+	managerInput.addEventListener('blur', () => {
+		validateManager();
+		setTimeout(closeManagerOptions, 0);
+	});
+	managerInput.addEventListener('keydown', (event) => {
+		if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+			event.preventDefault();
+			if (managerOptions.hidden) renderManagerOptions();
+			setActiveManager(nextManagerIndex(activeManagerIndex, visibleManagerNames.length, event.key === 'ArrowDown' ? 1 : -1));
+		} else if (event.key === 'Enter' && !managerOptions.hidden && activeManagerIndex >= 0) {
+			event.preventDefault();
+			selectManager(visibleManagerNames[activeManagerIndex]);
+		} else if (event.key === 'Escape') {
+			event.preventDefault();
+			event.stopPropagation();
+			closeManagerOptions();
+		}
+	});
+	managerToggle.addEventListener('click', () => {
+		const shouldOpen = managerOptions.hidden;
+		managerInput.focus();
+		if (shouldOpen && managerOptions.hidden) renderManagerOptions();
+		else if (!shouldOpen) closeManagerOptions();
+	});
+	document.addEventListener('click', (event) => {
+		if (!event.target.closest('.manager-combobox')) closeManagerOptions();
+	});
+	document.querySelector('#add-employee').addEventListener('click', () => openEmployee());
+	document.querySelector('#close-dialog').addEventListener('click', closeDialog);
+	document.querySelector('#cancel-dialog').addEventListener('click', closeDialog);
+	dialog.addEventListener('click', (event) => { if (event.target === dialog) closeDialog(); });
+	document.querySelector('#identity-button').addEventListener('click', () => identityDialog.showModal());
+	document.querySelector('#close-identity-dialog').addEventListener('click', () => identityDialog.close());
+	identityDialog.addEventListener('click', (event) => { if (event.target === identityDialog) identityDialog.close(); });
+	document.querySelector('#reload-employees').addEventListener('click', () => loadEmployees(true));
+
+	function renderAll() {
+		renderMetrics();
+		renderFilterOptions();
+		renderTable();
+	}
+
+	renderAccessIdentity();
+	loadEmployees();
+</script>
+
+<style is:global>
+  @layer components {
+.topbar {
+	height: 4.25rem;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 0 clamp(1.25rem, 4vw, 3.5rem);
+	border-bottom: 0.0625rem solid var(--border);
+	background: rgba(255, 255, 255, 0.94);
+}
+
+.brand { display: flex; align-items: center; gap: 0.6875rem; color: inherit; text-decoration: none; }
+.brand-mark { display: grid; place-items: center; width: 2.375rem; height: 2.375rem; border-radius: 0.6875rem; background: var(--dark-700); color: white; font-size: 0.8125rem; font-weight: 700; }
+.brand > span:last-child { display: grid; line-height: 1.05; }
+.brand strong { font-size: 1rem; }
+.brand small { margin-top: 0.1875rem; color: var(--text-2); font-size: 0.6875rem; letter-spacing: .08em; text-transform: uppercase; }
+
+.local-status { display: flex; align-items: center; gap: 0.5rem; padding: 0.4375rem 0.6875rem; border: 0.0625rem solid #d5e5dd; border-radius: 62.4375rem; background: #f4faf7; color: #587067; font-size: 0.75rem; }
+.status-dot { width: 0.4375rem; height: 0.4375rem; flex: 0 0 auto; border-radius: 50%; background: #3d9b74; box-shadow: 0 0 0 0.1875rem rgba(61, 155, 116, .12); }
+.local-status.saving .status-dot { background: #d59a28; box-shadow: 0 0 0 0.1875rem rgba(213, 154, 40, .12); }
+.local-status.error .status-dot { background: #b85045; box-shadow: 0 0 0 0.1875rem rgba(184, 80, 69, .12); }
+.identity-button { min-width: 0; display: flex; align-items: center; gap: 0.5625rem; padding: 0.3125rem 0.5625rem 0.3125rem 0.375rem; border: 0.0625rem solid var(--border); border-radius: 0.75rem; background: white; color: var(--text); text-align: left; }
+.identity-button:hover { border-color: #b9cac3; background: #f9fbfa; }
+.identity-button > svg { width: 0.9375rem; height: 0.9375rem; color: var(--text-2); }
+.identity-avatar { display: grid; place-items: center; width: 1.875rem; height: 1.875rem; flex: 0 0 auto; border-radius: 0.5625rem; background: var(--background-2); color: var(--dark-700); font-size: 0.625rem; font-weight: 700; }
+.identity-avatar.large { width: 3rem; height: 3rem; border-radius: 0.875rem; font-size: 0.9375rem; }
+.identity-copy { min-width: 0; display: grid; gap: 0.0625rem; }
+.identity-copy strong, .identity-copy small { max-width: 11.875rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.identity-copy strong { font-size: 0.75rem; }
+.identity-copy small { color: var(--text-2); font-size: 0.625rem; }
+
+.hris-dashboard_wrap > .container { width: min(87.5rem, calc(100% - clamp(1.75rem, 6vw, 5.5rem))); min-width: 0; margin: 0 auto; padding: 2.125rem 0 3.375rem; }
+.page-heading { display: flex; align-items: end; justify-content: space-between; gap: 1.5rem; margin-bottom: 1.625rem; }
+.page-heading .heading { margin: var(--space-2) 0 var(--space-1); }
+.page-heading > div > .text { color: var(--text-2); }
+.page-heading .button_wrap svg { width: 1.0625rem; height: 1.0625rem; }
+
+.metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; margin-bottom: 1.125rem; }
+.metric-card { display: flex; align-items: center; gap: 0.8125rem; min-height: 5.875rem; padding: 1.125rem; border: 0.0625rem solid var(--border); border-radius: 0.875rem; background: var(--background-3); }
+.metric-icon { display: grid; place-items: center; width: 2.625rem; height: 2.625rem; flex: 0 0 auto; border-radius: 0.75rem; }
+.metric-icon svg { width: 1.3125rem; height: 1.3125rem; }
+.metric-icon.green { background: #e7f3ed; color: #197052; }
+.metric-icon.blue { background: #eaf1f8; color: #426f9c; }
+.metric-icon.amber { background: #fbf1df; color: #a66f14; }
+.metric-icon.violet { background: #f0ebf8; color: #76579d; }
+.metric-card div { display: grid; gap: 0.25rem; }
+.metric-card span { color: var(--text-2); font-size: 0.75rem; }
+.metric-card strong { font-size: 1.5625rem; line-height: 1; letter-spacing: -.03em; }
+
+.directory-card { width: 100%; min-width: 0; overflow: hidden; border: 0.0625rem solid var(--border); border-radius: 1rem; background: var(--background-3); box-shadow: 0 0.75rem 2.375rem color-mix(in lab, var(--text) 8%, transparent); }
+.directory-toolbar { min-height: 5.125rem; display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; padding: 0.9375rem 1.125rem; border-bottom: 0.0625rem solid var(--border); }
+.directory-toolbar h2, .directory-toolbar p { margin: 0; }
+.directory-toolbar h2 { font-size: 1.125rem; letter-spacing: -.02em; }
+.directory-toolbar p { margin-top: 0.1875rem; color: var(--text-2); font-size: 0.75rem; }
+.filters { display: flex; align-items: center; gap: 0.5rem; }
+
+.search-box { width: min(17.5rem, 26vw); height: 2.5rem; display: flex; align-items: center; gap: 0.5625rem; padding: 0 0.75rem; border: 0.0625rem solid var(--border); border-radius: 0.625rem; background: #fbfcfb; color: #7a8782; }
+.search-box:focus-within, .select-wrap:focus-within { border-color: #6ca38d; box-shadow: 0 0 0 0.1875rem rgba(23, 107, 80, .08); }
+.search-box svg { width: 1.0625rem; height: 1.0625rem; flex: 0 0 auto; }
+.search-box input { width: 100%; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--text); font-size: 0.8125rem; }
+.search-box input::placeholder { color: #909c97; }
+
+.select-wrap { position: relative; height: 2.5rem; display: flex; align-items: center; border: 0.0625rem solid var(--border); border-radius: 0.625rem; background: white; }
+.select-wrap select { height: 100%; min-width: 9.0625rem; padding: 0 2.125rem 0 0.75rem; border: 0; outline: 0; appearance: none; background: transparent; color: #4d5b56; font-size: 0.8125rem; cursor: pointer; }
+.select-wrap svg { position: absolute; right: 0.625rem; width: 0.9375rem; height: 0.9375rem; pointer-events: none; }
+
+.table-wrap { min-height: 26.875rem; overflow-x: auto; }
+table { width: 100%; min-width: 65rem; border-collapse: collapse; font-size: 0.8125rem; }
+thead th { padding: 0.6875rem 1rem; border-bottom: 0.0625rem solid var(--border); background: #fafbfa; color: #7b8783; font-size: 0.625rem; font-weight: 700; letter-spacing: .08em; text-align: left; text-transform: uppercase; }
+thead th:last-child { width: 4.5rem; }
+tbody tr { border-bottom: 0.0625rem solid #edf1ef; transition: background 120ms; cursor: pointer; }
+tbody tr:last-child { border-bottom: 0; }
+tbody tr:hover, tbody tr:focus { background: #f7faf8; outline: 0; }
+td { padding: 0.75rem 1rem; color: #4e5b57; vertical-align: middle; }
+.person { display: flex; align-items: center; gap: 0.6875rem; min-width: 15.625rem; }
+.person > span:last-child { display: grid; gap: 0.1875rem; min-width: 0; }
+.person strong { color: var(--text); font-size: 0.8125rem; }
+.person small, .cell-secondary { overflow: hidden; color: #86918d; font-size: 0.6875rem; text-overflow: ellipsis; white-space: nowrap; }
+.avatar { display: grid; place-items: center; width: 2.125rem; height: 2.125rem; flex: 0 0 auto; border-radius: 0.625rem; font-size: 0.6875rem; font-weight: 700; }
+.tone-0 { background: #e5f2ec; color: #176b50; }
+.tone-1 { background: #e9f0f8; color: #466e96; }
+.tone-2 { background: #f6ecd9; color: #96691e; }
+.tone-3 { background: #efebf6; color: #755a94; }
+.tone-4 { background: #f4e9e7; color: #985f55; }
+.cell-primary, .cell-secondary { display: block; }
+.cell-primary { color: #37443f; font-size: 0.8125rem; font-weight: 400; }
+.cell-secondary { margin-top: 0.1875rem; }
+
+.status-badge { display: inline-flex; align-items: center; gap: 0.375rem; padding: 0.3125rem 0.5625rem; border-radius: 62.4375rem; font-size: 0.6875rem; font-weight: 700; }
+.status-badge::before { content: ""; width: 0.375rem; height: 0.375rem; border-radius: 50%; background: currentColor; }
+.status-badge.active { background: #e8f4ee; color: #287a5c; }
+.status-badge.onboarding { background: #eaf1f9; color: #47739e; }
+.status-badge.departing { background: #f9e9e7; color: #a84e43; }
+.status-badge.inactive { background: #eef0f2; color: #65717c; }
+.edit-button { padding: 0.375rem 0.5625rem; border: 0.0625rem solid transparent; border-radius: 0.4375rem; background: transparent; color: var(--dark-700); font-size: 0.75rem; font-weight: 700; }
+.edit-button:hover { border-color: #d5e5dd; background: #f1f8f5; }
+
+.empty-state { padding: 4.875rem 1.5rem; text-align: center; }
+.empty-state svg { width: 1.875rem; height: 1.875rem; color: #7c8984; }
+.empty-state h3 { margin: 0.75rem 0 0.25rem; font-size: 1rem; }
+.empty-state p { margin: 0; color: var(--text-2); font-size: 0.8125rem; }
+
+.directory-footer { min-height: 3.125rem; display: flex; align-items: center; justify-content: space-between; gap: 1.25rem; padding: 0 1.125rem; border-top: 0.0625rem solid var(--border); background: #fafbfa; }
+.directory-footer p { display: flex; align-items: center; gap: 0.5rem; margin: 0; color: #77847f; font-size: 0.6875rem; }
+.text-button { border: 0; background: transparent; color: #75817d; font-size: 0.6875rem; text-decoration: underline; text-underline-offset: 0.1875rem; }
+.text-button:hover { color: var(--dark-700); }
+
+dialog { width: min(42.5rem, calc(100% - 1.75rem)); max-height: calc(100vh - 2rem); padding: 0; overflow: auto; border: 0.0625rem solid var(--border); border-radius: 1.0625rem; background: white; box-shadow: 0 1.875rem 5.625rem rgba(18, 39, 32, .24); }
+dialog::backdrop { background: rgba(16, 31, 26, .38); backdrop-filter: blur(0.1875rem); }
+.dialog-header { position: sticky; top: 0; z-index: 2; display: flex; align-items: center; justify-content: space-between; padding: 1.1875rem 1.375rem; border-bottom: 0.0625rem solid var(--border); background: rgba(255, 255, 255, .96); }
+.dialog-header h2 { margin: 0.3125rem 0 0; font-size: 1.3125rem; letter-spacing: -.03em; }
+.icon-button { display: grid; place-items: center; width: 2.25rem; height: 2.25rem; border: 0.0625rem solid var(--border); border-radius: 0.5625rem; background: white; color: #65736e; }
+.icon-button:hover { background: #f5f7f6; }
+.icon-button svg { width: 1.0625rem; height: 1.0625rem; }
+
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.9375rem; padding: 1.3125rem 1.375rem 1.5rem; }
+.form-grid label, .form-field { display: grid; gap: 0.375rem; }
+.form-grid label.wide { grid-column: 1 / -1; }
+.form-grid label > span, .form-field > label { color: #596661; font-size: 0.6875rem; font-weight: 700; }
+.form-grid input, .form-grid select, .form-grid textarea { width: 100%; border: 0.0625rem solid var(--border); border-radius: 0.5625rem; outline: 0; background: #fcfdfc; color: var(--text); font-size: 0.8125rem; }
+.form-grid input, .form-grid select { height: 2.5rem; padding: 0 0.6875rem; }
+.form-grid textarea { padding: 0.625rem 0.6875rem; resize: vertical; }
+.form-grid input:focus, .form-grid select:focus, .form-grid textarea:focus { border-color: #6ca38d; box-shadow: 0 0 0 0.1875rem rgba(23, 107, 80, .08); }
+.manager-combobox { position: relative; }
+.manager-combobox input { padding-right: 2.375rem; }
+.manager-combobox input::-webkit-search-cancel-button { display: none; }
+.combobox-toggle { position: absolute; top: 0.0625rem; right: 0.0625rem; width: 2.25rem; height: 2.375rem; display: grid; place-items: center; padding: 0; border: 0; border-left: 0.0625rem solid var(--border); border-radius: 0 0.5rem 0.5rem 0; background: transparent; color: #71807a; }
+.combobox-toggle:hover { background: #f3f7f5; color: var(--dark-700); }
+.combobox-toggle svg { width: 1rem; height: 1rem; }
+.combobox-options { position: absolute; z-index: 10; top: calc(100% + 0.3125rem); right: 0; left: 0; max-height: 13.125rem; overflow-y: auto; padding: 0.3125rem; border: 0.0625rem solid var(--border); border-radius: 0.625rem; background: white; box-shadow: 0 0.75rem 1.75rem rgba(31, 55, 47, .16); }
+.combobox-option { width: 100%; padding: 0.5rem 0.5625rem; border: 0; border-radius: 0.4375rem; background: transparent; color: #35443e; font-size: 0.8125rem; text-align: left; }
+.combobox-option:hover, .combobox-option[aria-selected="true"] { background: var(--background-2); color: var(--dark-900); }
+.combobox-empty { padding: 0.5625rem; color: var(--text-2); font-size: 0.75rem; }
+.dialog-actions { position: sticky; bottom: 0; display: flex; justify-content: flex-end; gap: 0.5rem; padding: 0.875rem 1.375rem; border-top: 0.0625rem solid var(--border); background: rgba(250, 251, 250, .97); }
+.identity-dialog { width: min(38.75rem, calc(100% - 1.75rem)); }
+.identity-details { padding: 1.375rem; }
+.identity-hero { display: flex; align-items: center; gap: 0.8125rem; margin-bottom: 1.25rem; }
+.identity-hero > div { display: grid; gap: 0.1875rem; }
+.identity-hero strong { font-size: 1.0625rem; }
+.identity-hero span { color: var(--text-2); font-size: 0.75rem; }
+.identity-details dl { display: grid; gap: 0.0625rem; margin: 0 0 1.125rem; overflow: hidden; border: 0.0625rem solid var(--border); border-radius: 0.6875rem; background: var(--border); }
+.identity-details dl > div { display: grid; grid-template-columns: 9.6875rem 1fr; gap: 0.875rem; padding: 0.6875rem 0.8125rem; background: white; }
+.identity-details dt { color: var(--text-2); font-size: 0.6875rem; font-weight: 700; }
+.identity-details dd { min-width: 0; margin: 0; overflow-wrap: anywhere; color: #3d4a45; font-size: 0.75rem; }
+.identity-details details { border: 0.0625rem solid var(--border); border-radius: 0.6875rem; }
+.identity-details summary { padding: 0.6875rem 0.8125rem; color: var(--dark-700); font-size: 0.75rem; font-weight: 700; cursor: pointer; }
+.identity-details pre { max-height: 17.5rem; margin: 0; padding: 0.875rem; overflow: auto; border-top: 0.0625rem solid var(--border); background: #f7f9f8; color: #33413c; font: 0.6875rem/1.55 ui-monospace, SFMono-Regular, Consolas, monospace; white-space: pre-wrap; }
+
+.toast { position: fixed; right: 1.375rem; bottom: 1.375rem; z-index: 20; padding: 0.625rem 0.875rem; border-radius: 0.5625rem; background: #173c30; box-shadow: 0 0.75rem 1.875rem rgba(12, 42, 31, .22); color: white; font-size: 0.75rem; opacity: 0; transform: translateY(0.5rem); pointer-events: none; transition: opacity 160ms, transform 160ms; }
+.toast.show { opacity: 1; transform: translateY(0); }
+.sr-only { position: absolute !important; width: 0.0625rem; height: 0.0625rem; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+
+@media (max-width: 61.25rem) {
+	.hris-dashboard_wrap > .container { width: calc(100% - 1.75rem); }
+	.metrics { grid-template-columns: repeat(2, 1fr); }
+	.directory-toolbar { align-items: flex-start; flex-direction: column; }
+	.filters { width: 100%; }
+	.search-box { width: auto; flex: 1; }
+}
+
+@media (max-width: 40.625rem) {
+	.topbar { height: 3.875rem; padding: 0 0.875rem; }
+	.local-status, .identity-copy, .identity-button > svg { display: none; }
+	.identity-button { padding: 0.25rem; border: 0; background: transparent; }
+	.hris-dashboard_wrap > .container { width: calc(100% - 1.25rem); padding: 1.5625rem 0 2.125rem; }
+	.page-heading { align-items: stretch; flex-direction: column; }
+	.page-heading .button_wrap { align-self: flex-start; }
+	.metrics { grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+	.metric-card { min-height: 5.125rem; padding: 0.8125rem; }
+	.metric-icon { width: 2.25rem; height: 2.25rem; }
+	.metric-card strong { font-size: 1.3125rem; }
+	.directory-card { border-radius: 0.8125rem; }
+	.filters { align-items: stretch; flex-wrap: wrap; }
+	.search-box { width: 100%; flex-basis: 100%; }
+	.select-wrap { flex: 1; }
+	.select-wrap select { min-width: 0; width: 100%; }
+	.directory-footer p { max-width: 11.875rem; }
+	.form-grid { grid-template-columns: 1fr; padding: 1.125rem; }
+	.form-grid label.wide { grid-column: auto; }
+	.dialog-header, .dialog-actions { padding-right: 1.125rem; padding-left: 1.125rem; }
+	.identity-details dl > div { grid-template-columns: 1fr; gap: 0.25rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+	*, *::before, *::after { transition-duration: .01ms !important; scroll-behavior: auto !important; }
+}
+  }
+</style>

@@ -27,6 +27,11 @@
 		"node": ">=22"
 	},
 	"private": true,
+	"lumos": {
+		"version": "0.0.4",
+		"commit": "42d489788b7bf59fadd5f0505cdf783f690da75e",
+		"adapted": "2026-09-28"
+	},
 	"scripts": {
 		"astro": "astro",
 		"build": "astro build",
