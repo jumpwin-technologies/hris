@@ -52,9 +52,15 @@ import Input from "@/components/form/Input.astro";
 </Fieldset>
 ```
 
-`Form` has its own submission handler. The existing employee form keeps its
-custom D1 submission and manager-validation logic; replacing it requires an
-explicit integration of those handlers.
+The dashboard uses official `Card`, `Input`, `Select`, `Fieldset`, `Form`,
+`Button`, `Modal`, and `Accordion` components alongside Lumos layout and
+typography components. The employee table and searchable manager list retain
+application-specific markup and use Lumos design tokens.
+
+`Form` has one local extension: `enhance={false}` disables its built-in
+submission handler. The employee form uses this option to retain its JSON D1
+submission and manager-validation logic without duplicate submissions or
+premature form resets. Other forms keep the upstream behavior by default.
 
 The Worker embeds the dashboard HTML instead of serving the whole `dist`
 directory. CSS and Lumos's standalone client scripts are inlined through the

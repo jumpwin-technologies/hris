@@ -9,6 +9,8 @@ interface Props extends HTMLAttributes<"form"> {
   name?: string;
   /** Form endpoint. Omit to skip submission. */
   action?: string;
+  /** Use the built-in submission handler. Disable when the app handles submission. */
+  enhance?: boolean;
   /** Message shown after submission. */
   successMessage?: string;
   /** Message shown after an error. */
@@ -19,6 +21,7 @@ const {
   render = true,
   name,
   action,
+  enhance = true,
   successMessage = "Thanks — we will be in touch.",
   errorMessage = "That did not send. Please try again.",
   method = "post",
@@ -35,6 +38,7 @@ const content = await slotContent(Astro.slots);
       class:list={["form_wrap", className]}
       data-state="idle"
       data-endpoint={action}
+      data-enhance={enhance ? undefined : "false"}
     >
       <form
         class="form_fields"
@@ -58,6 +62,7 @@ const content = await slotContent(Astro.slots);
 
 <script>
   for (const form of document.querySelectorAll<HTMLElement>(".form_wrap")) {
+    if (form.dataset.enhance === "false") continue;
     const fields = form.querySelector<HTMLFormElement>(".form_fields");
     if (!fields) continue;
 

@@ -38,8 +38,13 @@ test("the HRIS dashboard is composed with Lumos components", async () => {
 
 	const html = await readFile(dashboardHtml, "utf8");
 	assert.match(html, /class="[^"]*section[^"]*hris-dashboard_wrap/);
-	assert.match(html, /class="[^"]*grid[^"]*metrics/);
-	assert.match(html, /class="[^"]*button_wrap[^"]*primary/);
+	assert.match(html, /class="[^"]*card_wrap/);
+	assert.match(html, /<button\b(?=[^>]*class="[^"]*button_wrap)(?=[^>]*id="add-employee")[^>]*>/);
+	assert.match(html, /<div\b(?=[^>]*class="[^"]*form_wrap)(?=[^>]*data-enhance="false")[^>]*>/);
+	assert.match(html, /class="[^"]*modal_wrap/);
+	assert.match(html, /class="[^"]*form-fieldset/);
+	assert.match(html, /class="[^"]*form-input/);
+	assert.match(html, /class="[^"]*form-select/);
 	assert.match(html, /id="employee-rows"/);
 	assert.match(html, /id="employee-dialog"/);
 	assert.match(html, /id="access-identity-data"/);
